@@ -1,0 +1,14 @@
+alias tools2="source ~/gits/tools2/dot-bash-rc"
+
+# Jira
+jira() {
+  deno run --allow-net --allow-env --allow-sys --allow-run --allow-write "$TOOLS2_PATH/jira.ts" $*
+}
+
+jiraticket() {
+  jira ticket $*
+}
+
+jiraboard() {
+  jira board $*
+}
