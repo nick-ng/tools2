@@ -1,11 +1,11 @@
-import { formatDate, getToolsPath, readInput } from './utils/general.ts';
-import { descriptionToMarkdown } from './utils/jira-utils.ts';
+import { formatDate, readInput } from './utils/general.ts';
 import {
 	applyJiraIssueTransition,
+	displayJiraIssue,
 	getJiraBoard,
+	getJiraIssue,
 	getJiraIssueComments,
 	getJiraIssueFromGitBranch,
-	getJiraTicket,
 	listJiraIssueTransitions,
 } from './utils/jira.ts';
 
@@ -28,6 +28,7 @@ const getStatusValue = (status: string): number => {
 };
 
 const main = async () => {
+	// @todo(nick-ng): assign yourself to an issue
 	switch (Deno.args[0]) {
 		case 'board': {
 			if (!Deno.args[1]) {
@@ -101,6 +102,24 @@ const main = async () => {
 				jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
 			}
 
+			displayJiraIssue(await getJiraIssue(jiraTicketNumber));
+
+			const comments = await getJiraIssueComments(jiraTicketNumber);
+
+			if (comments.length > 0) {
+				console.info('\nComments - newest first');
+				comments.sort((a, b) => {
+					return b.createdDate.valueOf() - a.createdDate.valueOf();
+				}).forEach(({ author, mdBody, createdDate }) => {
+					console.info(
+						`${formatDate(createdDate)}: ${author.displayName}`,
+					);
+					console.info(mdBody, '\n');
+				});
+			} else {
+				console.info('\nNo comments');
+			}
+
 			const jiraActionPayload = Deno.args[2] || '';
 
 			const [jiraAction, jiraPayload] = jiraActionPayload.split(':');
@@ -121,20 +140,6 @@ const main = async () => {
 						}
 
 						default: {
-							const comments = await getJiraIssueComments(jiraTicketNumber);
-
-							if (comments.length > 0) {
-								console.info('Comments - newest first');
-								comments.sort((a, b) => {
-									return b.createdDate.valueOf() - a.createdDate.valueOf();
-								}).forEach(({ author, mdBody, createdDate }) => {
-									console.info(
-										`${formatDate(createdDate)}: ${author.displayName}`,
-									);
-									console.info(mdBody, '\n');
-								});
-							}
-
 							break;
 						}
 					}
@@ -182,34 +187,9 @@ const main = async () => {
 
 					return;
 				}
-				case 'get':
+
 				default: {
-					const jiraTicket = await getJiraTicket(jiraTicketNumber);
-
-					console.info('Ticket No.:', jiraTicket.key);
-					console.info('Status:', jiraTicket.fields.status.name);
-					console.info('Summary:', jiraTicket.fields.summary);
-					console.info(
-						`Description:
-${descriptionToMarkdown(jiraTicket.fields.description)}`,
-					);
-					console.info(`\n${JIRA_URL}/browse/${jiraTicketNumber}`);
-
-					await Deno.writeTextFile(
-						`${getToolsPath()}/.tmp.txt`,
-						`${JIRA_URL}/browse/${jiraTicketNumber}`,
-					);
-
-					// const clipboardCmd = new Deno.Command('xclip', {
-					// 	args: [
-					// 		'-selection',
-					// 		'clipboard',
-					// 		'-i',
-					// 		`${TOOLS_PATH}/.tmp.txt`,
-					// 	],
-					// });
-
-					// await clipboardCmd.output();
+					// noop
 				}
 			}
 		}

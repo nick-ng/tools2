@@ -29,12 +29,27 @@ type JiraContentBulletList = {
 	content: JiraContentListItem[];
 };
 
+type JiraContentMediaSingle = {
+	type: 'mediaSingle';
+	content: {
+		type: string;
+		attrs: {
+			id: string;
+			type: string;
+			collection: string;
+			width: number;
+			height: number;
+		};
+	}[];
+};
+
 export type JiraContent = (
 	| JiraContentText
 	| JiraContentHeading
 	| JiraContentParagraph
 	| JiraContentListItem
 	| JiraContentBulletList
+	| JiraContentMediaSingle
 )[];
 
 const parseText = (content: JiraContentText): string => {
@@ -71,6 +86,11 @@ parseBulletList = ({ content }: JiraContentBulletList): string => {
 	return content.map(parseListItem).join('');
 };
 
+const parseMediaSingle = ({}: JiraContentMediaSingle): string => {
+	// blob:https://JIRA_URL/<?-uuid>#media-blob-url=true&id=<content[0].attrs.id>&contextId=<?-int>&collection=
+	return '\n\n<picture-goes-here>\n\n';
+};
+
 export const descriptionToMarkdown = (
 	{ content, type }: { content: JiraContent; type: string },
 ): string => {
@@ -99,7 +119,14 @@ export const descriptionToMarkdown = (
 			case 'bulletList': {
 				return parseBulletList(c);
 			}
+			case 'mediaSingle': {
+				return parseMediaSingle(c);
+			}
 			default: {
+				writeDebug(
+					'description-to-markdown-unexpected.json',
+					JSON.stringify(content, null, '\t'),
+				);
 				throw new Error(`Unexpected Jira content: ${JSON.stringify(c)}`);
 			}
 		}

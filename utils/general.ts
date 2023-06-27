@@ -42,15 +42,15 @@ export const getToolsPath = () => {
 
 export const getDebugPath = () => `${getToolsPath()}/debug`;
 
-export const writeDebug = async (
+export const writeDebug = (
 	filename: string,
 	message: string,
-): Promise<void> => {
+): void => {
 	const debugPath = getDebugPath();
 
-	await Deno.mkdir(debugPath, { recursive: true });
+	Deno.mkdirSync(debugPath, { recursive: true });
 
-	await Deno.writeTextFile(
+	Deno.writeTextFileSync(
 		`${debugPath}/.${filename}`,
 		message,
 	);

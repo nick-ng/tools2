@@ -1,7 +1,7 @@
-import type { JiraContent } from './jira-utils.ts';
+import { descriptionToMarkdown, JiraContent } from './jira-utils.ts';
 
 import { getCurrentBranch } from './git.ts';
-import { writeDebug } from './general.ts';
+import { getToolsPath, writeDebug } from './general.ts';
 
 export type JiraIssue = {
 	key: string;
@@ -34,6 +34,7 @@ if (!JIRA_URL) {
 	throw new Error('JIRA_URL not set.');
 }
 
+// @todo(nick-ng): cache get requests
 const jiraFetch = (
 	url: string,
 	init?:
@@ -82,7 +83,7 @@ export const getJiraIssueFromGitBranch = async (): Promise<string[]> => {
 	return matches || [];
 };
 
-export const getJiraTicket = async (
+export const getJiraIssue = async (
 	ticketHumanId: string,
 ): Promise<JiraIssue> => {
 	const url = `${JIRA_URL}/rest/api/3/issue/${ticketHumanId.toUpperCase()}`; // ?fields=summary,description,issuetype,status
@@ -102,6 +103,33 @@ export const getJiraTicket = async (
 	writeDebug('issue.json', JSON.stringify(jiraJson, null, '\t'));
 
 	return jiraJson;
+};
+
+export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
+	console.info('Ticket No.:', jiraIssue.key);
+	console.info('Status:', jiraIssue.fields.status.name);
+	console.info('Summary:', jiraIssue.fields.summary);
+	console.info(
+		`Description:
+${descriptionToMarkdown(jiraIssue.fields.description)}`,
+	);
+	console.info(`\n${JIRA_URL}/browse/${jiraIssue.key}`);
+
+	Deno.writeTextFileSync(
+		`${getToolsPath()}/.tmp.txt`,
+		`${JIRA_URL}/browse/${jiraIssue.key}`,
+	);
+
+	// const clipboardCmd = new Deno.Command('xclip', {
+	// 	args: [
+	// 		'-selection',
+	// 		'clipboard',
+	// 		'-i',
+	// 		`${TOOLS_PATH}/.tmp.txt`,
+	// 	],
+	// });
+
+	// await clipboardCmd.output();
 };
 
 export const listJiraIssueTransitions = async (
