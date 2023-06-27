@@ -106,14 +106,15 @@ export const getJiraIssue = async (
 };
 
 export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
-	console.info('Ticket No.:', jiraIssue.key);
+	console.info(
+		`Ticket No.: ${jiraIssue.key} - ${JIRA_URL}/browse/${jiraIssue.key}`,
+	);
 	console.info('Status:', jiraIssue.fields.status.name);
 	console.info('Summary:', jiraIssue.fields.summary);
 	console.info(
 		`Description:
 ${descriptionToMarkdown(jiraIssue.fields.description)}`,
 	);
-	console.info(`\n${JIRA_URL}/browse/${jiraIssue.key}`);
 
 	Deno.writeTextFileSync(
 		`${getToolsPath()}/.tmp.txt`,

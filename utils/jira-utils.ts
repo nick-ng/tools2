@@ -53,7 +53,7 @@ export type JiraContent = (
 )[];
 
 const parseText = (content: JiraContentText): string => {
-	return content.text;
+	return content?.text || '';
 };
 
 const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
@@ -92,8 +92,13 @@ const parseMediaSingle = ({}: JiraContentMediaSingle): string => {
 };
 
 export const descriptionToMarkdown = (
-	{ content, type }: { content: JiraContent; type: string },
+	p?: { content: JiraContent; type: string } | null,
 ): string => {
+	if (!p) {
+		return 'No description.';
+	}
+
+	const { content, type } = p;
 	if (type !== 'doc') {
 		writeDebug(
 			'description-to-markdown.json',
