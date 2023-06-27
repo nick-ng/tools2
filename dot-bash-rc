@@ -2,11 +2,16 @@ alias tools2="source ~/gits/tools2/dot-bash-rc"
 
 # Jira
 jira() {
-  deno run --allow-net --allow-env --allow-sys --allow-run --allow-write "$TOOLS2_PATH/jira.ts" $*
+  deno run --allow-net --allow-env --allow-sys --allow-run --allow-read --allow-write "$TOOLS2_PATH/jira.ts" $*
+}
+
+jiraless() {
+  jira $* | less
 }
 
 jiraticket() {
-  jira ticket $*
+  ticketNumber=$(jira ticket-number)
+  (jira ticket $ticketNumber && echo '' && jira ticket $ticketNumber comments) | less
 }
 
 jiraboard() {

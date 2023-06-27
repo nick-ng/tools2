@@ -1,6 +1,7 @@
 import type { JiraContent } from './jira-utils.ts';
 
 import { getCurrentBranch } from './git.ts';
+import { writeDebug } from './general.ts';
 
 export type JiraIssue = {
 	key: string;
@@ -11,13 +12,27 @@ export type JiraIssue = {
 	};
 };
 
+export type JiraSprint = {
+	state: string;
+	id: string;
+	name: string;
+	goal: string;
+	startDate: string;
+	endDate: string;
+};
+
+export type MyJiraStatus = {
+	status: string;
+	summary: string;
+	assignee?: string;
+	key: string;
+};
+
 const JIRA_URL = Deno.env.get('JIRA_URL');
 
 if (!JIRA_URL) {
 	throw new Error('JIRA_URL not set.');
 }
-
-const DEBUG_PATH = '/home/nickthree/gits/tools2/';
 
 const jiraFetch = (
 	url: string,
@@ -59,20 +74,12 @@ const jiraFetch = (
 	});
 };
 
-export const getJiraIssueFromGitBranch = async (): Promise<string> => {
+export const getJiraIssueFromGitBranch = async (): Promise<string[]> => {
 	const gitBranch = await getCurrentBranch();
 
-	const branchParts = gitBranch.split('/');
+	const matches = gitBranch.match(/\w+-\d+/g);
 
-	const jiraTicket = branchParts.find((b) => b.match(/\w+-\d+/));
-
-	if (!jiraTicket) {
-		throw new Error(
-			`Can't figure out Jira ticket from branch name: ${gitBranch}`,
-		);
-	}
-
-	return jiraTicket;
+	return matches || [];
 };
 
 export const getJiraTicket = async (
@@ -92,10 +99,7 @@ export const getJiraTicket = async (
 
 	const jiraJson = (await res.json()) as JiraIssue;
 
-	Deno.writeTextFile(
-		`${DEBUG_PATH}.issue.json`,
-		JSON.stringify(jiraJson, null, '\t'),
-	);
+	writeDebug('issue.json', JSON.stringify(jiraJson, null, '\t'));
 
 	return jiraJson;
 };
@@ -110,10 +114,11 @@ export const listJiraIssueTransitions = async (
 		transitions: { id: string; name: string }[];
 	};
 
-	Deno.writeTextFile(
-		`${DEBUG_PATH}.issueTransition-${issueHumanId}.json`,
+	writeDebug(
+		`issueTransition-${issueHumanId}.json`,
 		JSON.stringify(resJson, null, '\t'),
 	);
+
 	return resJson.transitions;
 };
 
@@ -164,10 +169,45 @@ export const applyJiraIssueTransition = async (
 	throw new Error();
 };
 
-export const getJiraBoard = async (boardId: string) => {
-	let activeSprint: { state: string; id: string } | undefined = undefined;
+const getMDBody = (text: string): string => {
+	return text.replace(/{{/g, '`').replace(/}}/g, '`');
+};
+
+export const getJiraIssueComments = async (ticketNumber: string) => {
+	const url1 = `${JIRA_URL}/rest/api/2/issue/${ticketNumber}/comment`;
+
+	const res1 = await jiraFetch(url1, { method: 'GET' });
+	const res1Json = await res1.json() as {
+		comments: {
+			author: { displayName: string };
+			body: string;
+			created: string;
+		}[];
+	};
+
+	writeDebug('issue-comments.json', JSON.stringify(res1Json, null, '\t'));
+
+	return res1Json.comments.map((c) => ({
+		...c,
+		createdDate: new Date(c.created),
+		mdBody: getMDBody(c.body),
+	}));
+};
+
+export const getJiraBoard = async (
+	boardId: string,
+	sprintAdjustment = 0,
+): Promise<{
+	sprint: JiraSprint;
+	issuesByStatus: { [status: string]: MyJiraStatus[] };
+}> => {
+	let activeSprint: JiraSprint | undefined = undefined;
+
+	const checkAllSprints = !isNaN(sprintAdjustment) && sprintAdjustment !== 0;
 
 	const limit = 50;
+
+	const allSprints: JiraSprint[] = [];
 
 	for (let i = 0; i < limit * 1000; i += limit) {
 		const url1 =
@@ -175,13 +215,21 @@ export const getJiraBoard = async (boardId: string) => {
 
 		const sprintsRes = await jiraFetch(url1, { method: 'GET' });
 		const sprints = await sprintsRes.json() as {
-			values: { state: string; id: string }[];
+			values: JiraSprint[];
 		};
 
-		Deno.writeTextFile(
-			`${DEBUG_PATH}.sprints${i.toString().padStart(4, '0')}.json`,
+		writeDebug(
+			`sprints${i.toString().padStart(4, '0')}.json`,
 			JSON.stringify(sprints, null, '\t'),
 		);
+
+		if (checkAllSprints) {
+			sprints.values.forEach((sprint) => {
+				if (!allSprints.map((s) => s.id).includes(sprint.id)) {
+					allSprints.push(sprint);
+				}
+			});
+		}
 
 		activeSprint = sprints.values.find((s) => s.state === 'active');
 
@@ -196,8 +244,25 @@ export const getJiraBoard = async (boardId: string) => {
 		throw new Error('Couldn\'t find active sprint.');
 	}
 
+	let interestedSprint = activeSprint;
+
+	if (checkAllSprints) {
+		allSprints.sort((a, b) => {
+			const aDate = new Date(a.startDate);
+			const bDate = new Date(b.startDate);
+
+			return aDate.valueOf() - bDate.valueOf();
+		});
+
+		const indexOfActiveSprint = allSprints.findIndex((s) =>
+			s.id === (activeSprint as JiraSprint).id
+		);
+
+		interestedSprint = allSprints[indexOfActiveSprint + sprintAdjustment];
+	}
+
 	const url2 =
-		`${JIRA_URL}/rest/agile/1.0/board/${boardId}/sprint/${activeSprint.id}/issue`; // ?fields=summary,assignee,status
+		`${JIRA_URL}/rest/agile/1.0/board/${boardId}/sprint/${interestedSprint.id}/issue`; // ?fields=summary,assignee,status
 
 	const sprintIssuesRes = await jiraFetch(url2, { method: 'GET' });
 	const sprintIssues = await sprintIssuesRes.json() as {
@@ -211,18 +276,10 @@ export const getJiraBoard = async (boardId: string) => {
 		}[];
 	};
 
-	Deno.writeTextFile(
-		`${DEBUG_PATH}.sprint-issues.json`,
-		JSON.stringify(sprintIssues, null, '\t'),
-	);
+	writeDebug('sprint-issues.json', JSON.stringify(sprintIssues, null, '\t'));
 
 	const issuesByStatus: {
-		[k: string]: {
-			status: string;
-			summary: string;
-			assignee?: string;
-			key: string;
-		}[];
+		[k: string]: MyJiraStatus[];
 	} = {};
 
 	for (let i = 0; i < sprintIssues.issues.length; i++) {
@@ -241,5 +298,5 @@ export const getJiraBoard = async (boardId: string) => {
 		});
 	}
 
-	return issuesByStatus;
+	return { sprint: interestedSprint, issuesByStatus };
 };

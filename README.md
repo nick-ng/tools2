@@ -4,6 +4,8 @@
 2. `.bashrc`:
 ```
 ...
+# contains TOOLS2_PATH
+source ~/.tools2Settings
 # contains JIRA_URL, ATLASSIAN_USER, and ATLASSIAN_API_TOKEN
 source ~/.jiraSecrets
 source <path>/tools2/dot-bash-rc
@@ -17,3 +19,7 @@ source <path>/tools2/dot-bash-rc
 * jira ticket <ticket-number> status
   * jira ticket <ticket-number> status:<status-name>
 * jira board <board-number>
+
+## Jira API
+
+- [Main API](https://docs.atlassian.com/software/jira/docs/api/REST/9.9.0/)

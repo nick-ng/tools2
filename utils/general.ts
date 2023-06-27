@@ -17,3 +17,41 @@ export const readInput = async (prompt = 'Enter your text:', trim = false) => {
 
 	return decoder.decode(buf.subarray(0, bufBytes)).replace(/\n$/, '');
 };
+
+const MONTHS = [
+	'Jan',
+	'Feb',
+	'Mar',
+	'Apr',
+	'May',
+	'Jun',
+	'Jul',
+	'Aug',
+	'Sep',
+	'Oct',
+	'Nov',
+	'Dec',
+];
+
+export const formatDate = (date: Date) =>
+	`${date.getDate()} ${MONTHS[date.getMonth()]} ${date.getFullYear()}`;
+
+export const getToolsPath = () => {
+	return Deno.env.get('TOOLS2_PATH');
+};
+
+export const getDebugPath = () => `${getToolsPath()}/debug`;
+
+export const writeDebug = async (
+	filename: string,
+	message: string,
+): Promise<void> => {
+	const debugPath = getDebugPath();
+
+	await Deno.mkdir(debugPath, { recursive: true });
+
+	await Deno.writeTextFile(
+		`${debugPath}/.${filename}`,
+		message,
+	);
+};
