@@ -28,8 +28,18 @@ const getStatusValue = (status: string): number => {
 };
 
 const main = async () => {
+	let jiraTicketNumber = Deno.args[1];
+
+	if (!jiraTicketNumber) {
+		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
+	}
+
 	// @todo(nick-ng): assign yourself to an issue
 	switch (Deno.args[0]) {
+		case 'link': {
+			console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
+			break;
+		}
 		case 'board': {
 			if (!Deno.args[1]) {
 				console.error('Missing board number.');
@@ -87,8 +97,6 @@ const main = async () => {
 		}
 		case 'ticket-number':
 		case 'issue-number': {
-			const jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
-
 			console.info(jiraTicketNumber);
 
 			break;
@@ -96,12 +104,6 @@ const main = async () => {
 		case 'ticket':
 		case 'issue':
 		default: {
-			let jiraTicketNumber = Deno.args[1];
-
-			if (!jiraTicketNumber) {
-				jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
-			}
-
 			displayJiraIssue(await getJiraIssue(jiraTicketNumber));
 
 			const comments = await getJiraIssueComments(jiraTicketNumber);

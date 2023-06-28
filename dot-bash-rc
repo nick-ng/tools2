@@ -17,3 +17,11 @@ jiraticket() {
 jiraboard() {
   jira board $*
 }
+
+jiralink() {
+  TMP=$(jira link $*)
+
+  echo $TMP | xclip -selection clipboard
+
+  echo "Copied $TMP to clipboard"
+}

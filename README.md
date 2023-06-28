@@ -23,3 +23,4 @@ source <path>/tools2/dot-bash-rc
 ## Jira API
 
 - [Main API](https://docs.atlassian.com/software/jira/docs/api/REST/9.9.0/)
+- [?](https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/media/)

@@ -9,6 +9,7 @@ export type JiraIssue = {
 		status: { name: string };
 		summary: string;
 		description: { type: string; content: JiraContent };
+		assignee: { displayName: string };
 	};
 };
 
@@ -106,14 +107,20 @@ export const getJiraIssue = async (
 };
 
 export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
+	const { fields } = jiraIssue;
 	console.info(
 		`Ticket No.: ${jiraIssue.key} - ${JIRA_URL}/browse/${jiraIssue.key}`,
 	);
-	console.info('Status:', jiraIssue.fields.status.name);
-	console.info('Summary:', jiraIssue.fields.summary);
 	console.info(
-		`Description:
-${descriptionToMarkdown(jiraIssue.fields.description)}`,
+		'Assignee:',
+		fields.assignee?.displayName
+			? fields.assignee?.displayName
+			: 'Not assigned',
+	);
+	console.info('Status:', fields.status.name);
+	console.info('Summary:', fields.summary);
+	console.info(
+		`Description:\n${descriptionToMarkdown(fields.description)}`,
 	);
 
 	Deno.writeTextFileSync(
