@@ -24,3 +24,11 @@ source <path>/tools2/dot-bash-rc
 
 - [Main API](https://docs.atlassian.com/software/jira/docs/api/REST/9.9.0/)
 - [?](https://developer.atlassian.com/cloud/jira/platform/apis/document/nodes/media/)
+
+## Todos
+
+### ToDo Comments
+
+- jira.ts:39: @todo(nick-ng): assign yourself to an issue
+- utils/jira.ts:32: @todo(nick-ng): cache get requests
+- utils/jira.ts:269: @todo(nick-ng): handle unassign

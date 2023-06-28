@@ -1,7 +1,7 @@
 import { descriptionToMarkdown, JiraContent } from './jira-utils.ts';
 
 import { getCurrentBranch } from './git.ts';
-import { getToolsPath, writeDebug } from './general.ts';
+import { getToolsPath, readInput, writeDebug } from './general.ts';
 
 export type JiraIssue = {
 	key: string;
@@ -29,19 +29,19 @@ export type MyJiraStatus = {
 	key: string;
 };
 
-const JIRA_URL = Deno.env.get('JIRA_URL');
-
-if (!JIRA_URL) {
-	throw new Error('JIRA_URL not set.');
-}
-
 // @todo(nick-ng): cache get requests
 const jiraFetch = (
-	url: string,
+	route: string,
 	init?:
 		| (RequestInit)
 		| undefined,
 ) => {
+	const jiraUrl = Deno.env.get('JIRA_URL');
+
+	if (!jiraUrl) {
+		throw new Error('JIRA_URL not set.');
+	}
+
 	const jiraCookie = Deno.env.get('JIRA_COOKIE');
 	const atlassianUser = Deno.env.get('ATLASSIAN_USER');
 	const atlassianAPIToken = Deno.env.get('ATLASSIAN_API_TOKEN');
@@ -68,7 +68,7 @@ const jiraFetch = (
 		);
 	}
 
-	return fetch(url, {
+	return fetch(`${jiraUrl}${route.startsWith('/') ? '' : '/'}${route}`, {
 		...init,
 		headers: init?.headers
 			? { ...init.headers, ...extraHeaders }
@@ -87,11 +87,12 @@ export const getJiraIssueFromGitBranch = async (): Promise<string[]> => {
 export const getJiraIssue = async (
 	ticketHumanId: string,
 ): Promise<JiraIssue> => {
-	const url = `${JIRA_URL}/rest/api/3/issue/${ticketHumanId.toUpperCase()}`; // ?fields=summary,description,issuetype,status
-
-	const res = await jiraFetch(url, {
-		method: 'GET',
-	});
+	const res = await jiraFetch(
+		`/rest/api/3/issue/${ticketHumanId.toUpperCase()}`, // ?fields=summary,description,issuetype,status
+		{
+			method: 'GET',
+		},
+	);
 
 	if (res.status !== 200) {
 		console.error('res', res);
@@ -107,9 +108,10 @@ export const getJiraIssue = async (
 };
 
 export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
+	const jiraUrl = Deno.env.get('JIRA_URL');
 	const { fields } = jiraIssue;
 	console.info(
-		`Ticket No.: ${jiraIssue.key} - ${JIRA_URL}/browse/${jiraIssue.key}`,
+		`Ticket No.: ${jiraIssue.key} - ${jiraUrl}/browse/${jiraIssue.key}`,
 	);
 	console.info(
 		'Assignee:',
@@ -125,7 +127,7 @@ export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
 
 	Deno.writeTextFileSync(
 		`${getToolsPath()}/.tmp.txt`,
-		`${JIRA_URL}/browse/${jiraIssue.key}`,
+		`${jiraUrl}/browse/${jiraIssue.key}`,
 	);
 
 	// const clipboardCmd = new Deno.Command('xclip', {
@@ -141,17 +143,18 @@ export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
 };
 
 export const listJiraIssueTransitions = async (
-	issueHumanId: string,
+	issueKey: string,
 ): Promise<{ id: string; name: string }[]> => {
-	const url = `${JIRA_URL}/rest/api/2/issue/${issueHumanId}/transitions`;
-	const res = await jiraFetch(url, { method: 'GET' });
+	const res = await jiraFetch(`/rest/api/2/issue/${issueKey}/transitions`, {
+		method: 'GET',
+	});
 
 	const resJson = await res.json() as {
 		transitions: { id: string; name: string }[];
 	};
 
 	writeDebug(
-		`issueTransition-${issueHumanId}.json`,
+		`issueTransition-${issueKey}.json`,
 		JSON.stringify(resJson, null, '\t'),
 	);
 
@@ -159,49 +162,141 @@ export const listJiraIssueTransitions = async (
 };
 
 export const applyJiraIssueTransition = async (
-	issueHumanId: string,
+	issueKey: string,
 	transitionNameOrId: string,
+	skipValidation = false,
 ): Promise<false | string> => {
-	const validTransitions = await listJiraIssueTransitions(issueHumanId);
+	let transitionId = transitionNameOrId;
+	let transitionName = '';
 
-	const desiredTransitions = validTransitions.filter((t) =>
-		t.id === transitionNameOrId ||
-		t.name.toUpperCase().startsWith(transitionNameOrId.toUpperCase())
-	);
+	if (!skipValidation) {
+		const validTransitions = await listJiraIssueTransitions(issueKey);
 
-	if (desiredTransitions.length === 0) {
-		console.error(`${transitionNameOrId} does not match a valid transition.`);
-		return false;
+		const desiredTransitions = validTransitions.filter((t) =>
+			t.id === transitionNameOrId ||
+			t.name.toUpperCase().startsWith(transitionNameOrId.toUpperCase())
+		);
+
+		if (desiredTransitions.length === 0) {
+			console.error(`${transitionNameOrId} does not match a valid transition.`);
+			return false;
+		}
+
+		if (desiredTransitions.length > 1) {
+			console.error(`${transitionNameOrId} matches too many transitions.`);
+			desiredTransitions.forEach((t) => console.info(t.name));
+			return false;
+		}
+
+		transitionId = desiredTransitions[0].id;
+		transitionName = desiredTransitions[0].name;
 	}
 
-	if (desiredTransitions.length > 1) {
-		console.error(`${transitionNameOrId} matches too many transitions.`);
-		desiredTransitions.forEach((t) => console.info(t.name));
-		return false;
-	}
+	const route = `/rest/api/3/issue/${issueKey}/transitions`;
 
-	const url = `${JIRA_URL}/rest/api/3/issue/${issueHumanId}/transitions`;
-
-	const res = await jiraFetch(url, {
+	const res = await jiraFetch(route, {
 		method: 'POST',
 		headers: {
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({
 			transition: {
-				id: desiredTransitions[0].id,
+				id: transitionId,
 			},
 		}),
 	});
 
 	if (res.status === 204) {
-		return desiredTransitions[0].name;
+		return transitionName || transitionId;
 	}
 
 	console.error('res.text()', await res.text());
 	console.error('res', res);
-	console.error('url', url);
-	console.error('desiredTransitions', desiredTransitions);
+	console.error('route', route);
+	console.error('desiredTransitions', {
+		id: transitionId,
+		name: transitionName,
+	});
+	throw new Error();
+};
+
+export const listAndApplyJiraTransition = async (jiraTicketNumber: string) => {
+	const transitions = await listJiraIssueTransitions(
+		jiraTicketNumber,
+	);
+
+	const prompt = [
+		'Choose a new status:',
+		...transitions.map((transition, i) => {
+			return `${i + 1}: ${transition.name}`;
+		}),
+		'0: Do nothing',
+	].join('\n');
+
+	const temp = await readInput(prompt, true);
+
+	if (temp === '0') {
+		return false;
+	}
+
+	const { id: newTransitionId, name: newTransitionName } =
+		transitions[parseInt(temp, 10) - 1];
+
+	const result = await applyJiraIssueTransition(
+		jiraTicketNumber,
+		newTransitionId,
+		true,
+	);
+
+	return result ? newTransitionName : false;
+};
+
+export const getMyJiraUser = async () => {
+	const res = await jiraFetch('/rest/api/2/myself', { method: 'GET' });
+
+	const resJson = await res.json() as {
+		name: string;
+		displayName: string;
+		accountId: string;
+		emailAddress: string;
+	};
+
+	writeDebug('my-jira-user', JSON.stringify(resJson, null, '  '));
+
+	return resJson;
+};
+
+// @todo(nick-ng): handle unassign
+export const assignToJiraIssue = async (
+	issueKey: string,
+	assigneeAccountId?: string,
+): Promise<false | string> => {
+	let actualAssignee = assigneeAccountId;
+	if (typeof assigneeAccountId !== 'string') {
+		const me = await getMyJiraUser();
+
+		actualAssignee = me.accountId;
+	}
+
+	const route = `/rest/api/2/issue/${issueKey}/assignee`;
+	const res = await jiraFetch(route, {
+		method: 'PUT',
+		headers: {
+			'Content-Type': 'application/json',
+		},
+		body: JSON.stringify({
+			accountId: actualAssignee,
+		}),
+	});
+
+	if (res.status === 204) {
+		return 'ok';
+	}
+
+	console.error('res.text()', await res.text());
+	console.error('res', res);
+	console.error('route', route);
+	console.error('assigneeName', assigneeAccountId);
 	throw new Error();
 };
 
@@ -210,9 +305,9 @@ const getMDBody = (text: string): string => {
 };
 
 export const getJiraIssueComments = async (ticketNumber: string) => {
-	const url1 = `${JIRA_URL}/rest/api/2/issue/${ticketNumber}/comment`;
-
-	const res1 = await jiraFetch(url1, { method: 'GET' });
+	const res1 = await jiraFetch(`/rest/api/2/issue/${ticketNumber}/comment`, {
+		method: 'GET',
+	});
 	const res1Json = await res1.json() as {
 		comments: {
 			author: { displayName: string };
@@ -246,10 +341,10 @@ export const getJiraBoard = async (
 	const allSprints: JiraSprint[] = [];
 
 	for (let i = 0; i < limit * 1000; i += limit) {
-		const url1 =
-			`${JIRA_URL}/rest/agile/1.0/board/${boardId}/sprint?start=${i}&limit=${limit}`;
-
-		const sprintsRes = await jiraFetch(url1, { method: 'GET' });
+		const sprintsRes = await jiraFetch(
+			`/rest/agile/1.0/board/${boardId}/sprint?start=${i}&limit=${limit}`,
+			{ method: 'GET' },
+		);
 		const sprints = await sprintsRes.json() as {
 			values: JiraSprint[];
 		};
@@ -297,10 +392,10 @@ export const getJiraBoard = async (
 		interestedSprint = allSprints[indexOfActiveSprint + sprintAdjustment];
 	}
 
-	const url2 =
-		`${JIRA_URL}/rest/agile/1.0/board/${boardId}/sprint/${interestedSprint.id}/issue`; // ?fields=summary,assignee,status
-
-	const sprintIssuesRes = await jiraFetch(url2, { method: 'GET' });
+	const sprintIssuesRes = await jiraFetch(
+		`/rest/agile/1.0/board/${boardId}/sprint/${interestedSprint.id}/issue`, // ?fields=summary,assignee,status
+		{ method: 'GET' },
+	);
 	const sprintIssues = await sprintIssuesRes.json() as {
 		issues: {
 			key: string;

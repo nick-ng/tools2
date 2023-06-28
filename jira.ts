@@ -1,11 +1,13 @@
 import { formatDate, readInput } from './utils/general.ts';
 import {
 	applyJiraIssueTransition,
+	assignToJiraIssue,
 	displayJiraIssue,
 	getJiraBoard,
 	getJiraIssue,
 	getJiraIssueComments,
 	getJiraIssueFromGitBranch,
+	listAndApplyJiraTransition,
 	listJiraIssueTransitions,
 } from './utils/jira.ts';
 
@@ -148,29 +150,38 @@ const main = async () => {
 
 					break;
 				}
+				case 'assign': {
+					if (!['me'].includes(jiraPayload)) {
+						return;
+					}
+
+					await assignToJiraIssue(jiraTicketNumber);
+
+					const result = await listAndApplyJiraTransition(jiraTicketNumber);
+
+					if (result) {
+						console.info(`${jiraTicketNumber} is now "${result}"`);
+					} else {
+						console.error(
+							`Error when updating status of ${jiraTicketNumber}`,
+						);
+					}
+
+					return;
+				}
 				case 'status': {
 					let payload = jiraPayload;
 
 					if (!payload) {
-						const transitions = await listJiraIssueTransitions(
-							jiraTicketNumber,
-						);
+						const result = await listAndApplyJiraTransition(jiraTicketNumber);
 
-						const prompt = [
-							'Choose a new status:',
-							...transitions.map((transition, i) => {
-								return `${i + 1}: ${transition.name}`;
-							}),
-							'0: Do nothing',
-						].join('\n');
-
-						const temp = await readInput(prompt, true);
-
-						if (temp === '0') {
-							return;
+						if (result) {
+							console.info(`${jiraTicketNumber} is now "${result}"`);
+						} else {
+							console.error(
+								`Error when updating status of ${jiraTicketNumber}`,
+							);
 						}
-
-						payload = transitions[parseInt(temp, 10) - 1].name;
 					}
 
 					if (payload) {
@@ -189,7 +200,6 @@ const main = async () => {
 
 					return;
 				}
-
 				default: {
 					// noop
 				}
