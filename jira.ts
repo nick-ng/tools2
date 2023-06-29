@@ -7,6 +7,7 @@ import {
 	getJiraIssue,
 	getJiraIssueComments,
 	getJiraIssueFromGitBranch,
+	getMyJiraUser,
 	listAndApplyJiraTransition,
 	listJiraIssueTransitions,
 } from './utils/jira.ts';
@@ -36,7 +37,6 @@ const main = async () => {
 		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
 	}
 
-	// @todo(nick-ng): assign yourself to an issue
 	switch (Deno.args[0]) {
 		case 'link': {
 			console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
@@ -151,28 +151,38 @@ const main = async () => {
 					break;
 				}
 				case 'assign': {
-					if (!['me'].includes(jiraPayload)) {
-						return;
+					let changeStatus = false;
+					if (['me'].includes(jiraPayload)) {
+						const me = await getMyJiraUser();
+
+						await assignToJiraIssue(jiraTicketNumber, me.accountId);
+
+						changeStatus = true;
 					}
 
-					await assignToJiraIssue(jiraTicketNumber);
+					if (['not-me'].includes(jiraPayload)) {
+						await assignToJiraIssue(jiraTicketNumber);
 
-					const result = await listAndApplyJiraTransition(jiraTicketNumber);
+						changeStatus = true;
+					}
 
-					if (result) {
-						console.info(`${jiraTicketNumber} is now "${result}"`);
-					} else {
-						console.error(
-							`Error when updating status of ${jiraTicketNumber}`,
-						);
+					if (changeStatus) {
+						const result = await listAndApplyJiraTransition(jiraTicketNumber);
+						if (result === '0') {
+							// nothing
+						} else if (result) {
+							console.info(`${jiraTicketNumber} is now "${result}"`);
+						} else {
+							console.error(
+								`Error when updating status of ${jiraTicketNumber}`,
+							);
+						}
 					}
 
 					return;
 				}
 				case 'status': {
-					let payload = jiraPayload;
-
-					if (!payload) {
+					if (!jiraPayload) {
 						const result = await listAndApplyJiraTransition(jiraTicketNumber);
 
 						if (result) {
@@ -184,10 +194,10 @@ const main = async () => {
 						}
 					}
 
-					if (payload) {
+					if (jiraPayload) {
 						const result = await applyJiraIssueTransition(
 							jiraTicketNumber,
-							payload,
+							jiraPayload,
 						);
 						if (result) {
 							console.info(`${jiraTicketNumber} is now "${result}"`);

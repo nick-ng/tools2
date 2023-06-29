@@ -236,7 +236,7 @@ export const listAndApplyJiraTransition = async (jiraTicketNumber: string) => {
 	const temp = await readInput(prompt, true);
 
 	if (temp === '0') {
-		return false;
+		return '0';
 	}
 
 	const { id: newTransitionId, name: newTransitionName } =
@@ -266,18 +266,10 @@ export const getMyJiraUser = async () => {
 	return resJson;
 };
 
-// @todo(nick-ng): handle unassign
 export const assignToJiraIssue = async (
 	issueKey: string,
 	assigneeAccountId?: string,
 ): Promise<false | string> => {
-	let actualAssignee = assigneeAccountId;
-	if (typeof assigneeAccountId !== 'string') {
-		const me = await getMyJiraUser();
-
-		actualAssignee = me.accountId;
-	}
-
 	const route = `/rest/api/2/issue/${issueKey}/assignee`;
 	const res = await jiraFetch(route, {
 		method: 'PUT',
@@ -285,7 +277,7 @@ export const assignToJiraIssue = async (
 			'Content-Type': 'application/json',
 		},
 		body: JSON.stringify({
-			accountId: actualAssignee,
+			accountId: assigneeAccountId || null,
 		}),
 	});
 

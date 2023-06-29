@@ -29,6 +29,4 @@ source <path>/tools2/dot-bash-rc
 
 ### ToDo Comments
 
-- jira.ts:39: @todo(nick-ng): assign yourself to an issue
 - utils/jira.ts:32: @todo(nick-ng): cache get requests
-- utils/jira.ts:269: @todo(nick-ng): handle unassign
