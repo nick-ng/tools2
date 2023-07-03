@@ -38,10 +38,12 @@ const main = async () => {
 	}
 
 	switch (Deno.args[0]) {
+		case 'l':
 		case 'link': {
 			console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
 			break;
 		}
+		case 'b':
 		case 'board': {
 			if (!Deno.args[1]) {
 				console.error('Missing board number.');
@@ -103,9 +105,9 @@ const main = async () => {
 
 			break;
 		}
+		case 'i':
 		case 'ticket':
-		case 'issue':
-		default: {
+		case 'issue': {
 			displayJiraIssue(await getJiraIssue(jiraTicketNumber));
 
 			const comments = await getJiraIssueComments(jiraTicketNumber);
@@ -214,6 +216,23 @@ const main = async () => {
 					// noop
 				}
 			}
+			break;
+		}
+		case 'help':
+		default: {
+			console.info('Nick 3\'s Jira CLI\n');
+			console.info('Commands');
+			console.info('- jira i <issue-key>: Jira issue');
+			console.info(
+				'  - jira i <issue-key> assign:[me, not-me]: Assign Jira issue to yourself or unassign Jira issue',
+			);
+			console.info(
+				'  - jira i <issue-key> status: Change status of Jira issue',
+			);
+			console.info('- jira b <board-number>: Jira board');
+			console.info(
+				'- jiralink: Copy link to current Jira issue to clipboard. Current Jira issue detected from git branch name',
+			);
 		}
 	}
 };
