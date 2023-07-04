@@ -1,4 +1,4 @@
-import { formatDate, readInput } from './utils/general.ts';
+import { formatDate } from './utils/general.ts';
 import {
 	applyJiraIssueTransition,
 	assignToJiraIssue,
@@ -9,7 +9,6 @@ import {
 	getJiraIssueFromGitBranch,
 	getMyJiraUser,
 	listAndApplyJiraTransition,
-	listJiraIssueTransitions,
 } from './utils/jira.ts';
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
