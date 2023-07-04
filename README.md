@@ -4,7 +4,7 @@
 2. `.bashrc`:
 ```
 ...
-# contains TOOLS2_PATH
+# contains TOOLS2_PATH, DEFAULT_ISSUE_PREFIX
 source ~/.tools2Settings
 # contains JIRA_URL, ATLASSIAN_USER, and ATLASSIAN_API_TOKEN
 source ~/.jiraSecrets

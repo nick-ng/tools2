@@ -34,6 +34,12 @@ const main = async () => {
 
 	if (!jiraTicketNumber) {
 		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
+	} else if (
+		jiraTicketNumber.match(/^\d+$/) && Deno.env.get('DEFAULT_ISSUE_PREFIX')
+	) {
+		jiraTicketNumber = `${
+			Deno.env.get('DEFAULT_ISSUE_PREFIX')
+		}-${jiraTicketNumber}`;
 	}
 
 	switch (Deno.args[0]) {
