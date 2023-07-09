@@ -115,29 +115,30 @@ const main = async () => {
 		case 'issue': {
 			displayJiraIssue(await getJiraIssue(jiraTicketNumber));
 
-			const comments = await getJiraIssueComments(jiraTicketNumber);
-
-			if (comments.length > 0) {
-				console.info('\nComments - newest first');
-				comments.sort((a, b) => {
-					return b.createdDate.valueOf() - a.createdDate.valueOf();
-				}).forEach(({ author, mdBody, createdDate }) => {
-					console.info(
-						`${formatDate(createdDate)}: ${author.displayName}`,
-					);
-					console.info(mdBody, '\n');
-				});
-			} else {
-				console.info('\nNo comments');
-			}
-
 			const jiraActionPayload = Deno.args[2] || '';
 
 			const [jiraAction, jiraPayload] = jiraActionPayload.split(':');
 
+			const comments = await getJiraIssueComments(jiraTicketNumber);
+
 			switch (jiraAction) {
+				case 'c':
 				case 'comment':
 				case 'comments': {
+					if (comments.length > 0) {
+						console.info('\nComments - newest first');
+						comments.sort((a, b) => {
+							return b.createdDate.valueOf() - a.createdDate.valueOf();
+						}).forEach(({ author, mdBody, createdDate }) => {
+							console.info(
+								`${formatDate(createdDate)}: ${author.displayName}`,
+							);
+							console.info(mdBody, '\n');
+						});
+					} else {
+						console.info('\nNo comments');
+					}
+
 					switch (jiraPayload) {
 						case 'edit':
 						case 'rich': {
@@ -157,6 +158,7 @@ const main = async () => {
 
 					break;
 				}
+				case 'a':
 				case 'assign': {
 					let changeStatus = false;
 					if (['me'].includes(jiraPayload)) {
@@ -218,7 +220,15 @@ const main = async () => {
 					return;
 				}
 				default: {
-					// noop
+					if (comments.length > 0) {
+						console.info(
+							`\nType \`jira i ${
+								Deno.args[1]
+							} c\` to see ${comments.length} comments`,
+						);
+					} else {
+						console.info(`\nNo comments`);
+					}
 				}
 			}
 			break;
