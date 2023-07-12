@@ -15,13 +15,13 @@ const JIRA_URL = Deno.env.get('JIRA_URL');
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
-		case 'In Progress': {
+		case 'in progress': {
 			return 10;
 		}
-		case 'Review': {
+		case 'review': {
 			return 20;
 		}
-		case 'Done': {
+		case 'done': {
 			return 30;
 		}
 		default:
@@ -91,7 +91,8 @@ const main = async () => {
 			}
 
 			Object.entries(issuesByStatus).sort((a, b) => {
-				return getStatusValue(a[0]) - getStatusValue(b[0]);
+				return getStatusValue(a[0].toLowerCase()) -
+					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues], i) => {
 				console.info(`\n${status}`);
 				issues.forEach((issue) => {
@@ -196,6 +197,9 @@ const main = async () => {
 
 						if (result) {
 							console.info(`${jiraTicketNumber} is now "${result}"`);
+							if (result.toLowerCase() === 'done') {
+								console.info('🎠');
+							}
 						} else {
 							console.error(
 								`Error when updating status of ${jiraTicketNumber}`,
@@ -210,6 +214,9 @@ const main = async () => {
 						);
 						if (result) {
 							console.info(`${jiraTicketNumber} is now "${result}"`);
+							if (result.toLowerCase() === 'done') {
+								console.info('🎠');
+							}
 						} else {
 							console.error(
 								`Error when updating status of ${jiraTicketNumber}`,
