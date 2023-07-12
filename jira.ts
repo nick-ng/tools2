@@ -198,6 +198,7 @@ const main = async () => {
 						if (result) {
 							console.info(`${jiraTicketNumber} is now "${result}"`);
 							if (result.toLowerCase() === 'done') {
+								// @todo(nick-ng): animate the carousel horse moving across the screen.
 								console.info('🎠');
 							}
 						} else {
