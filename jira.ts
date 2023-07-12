@@ -169,7 +169,7 @@ const main = async () => {
 						changeStatus = true;
 					}
 
-					if (['not-me'].includes(jiraPayload)) {
+					if (['not-me', 'no-one', 'noone'].includes(jiraPayload)) {
 						await assignToJiraIssue(jiraTicketNumber);
 
 						changeStatus = true;
@@ -239,7 +239,7 @@ const main = async () => {
 			console.info('Commands');
 			console.info('- jira i <issue-key>: Jira issue');
 			console.info(
-				'  - jira i <issue-key> assign:[me, not-me]: Assign Jira issue to yourself or unassign Jira issue',
+				'  - jira i <issue-key> assign:[me, no-one]: Assign Jira issue to yourself or unassign Jira issue',
 			);
 			console.info(
 				'  - jira i <issue-key> status: Change status of Jira issue',

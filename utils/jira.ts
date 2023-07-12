@@ -261,7 +261,7 @@ export const getMyJiraUser = async () => {
 		emailAddress: string;
 	};
 
-	writeDebug('my-jira-user', JSON.stringify(resJson, null, '  '));
+	writeDebug('my-jira-user.json', JSON.stringify(resJson, null, '  '));
 
 	return resJson;
 };

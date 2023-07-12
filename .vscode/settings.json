@@ -1,10 +1,10 @@
 {
-  "[typescript]": {
-    "editor.defaultFormatter": "denoland.vscode-deno"
-  },
-  "deno.enable": true,
-  "editor.formatOnSave": true,
-  "editor.defaultFormatter": "denoland.vscode-deno",
-  "deno.config": "./deno.jsonc",
-  "deno.unstable": true
+	"[typescript]": {
+		"editor.defaultFormatter": "denoland.vscode-deno"
+	},
+	"deno.enable": true,
+	"editor.formatOnSave": true,
+	"editor.defaultFormatter": "denoland.vscode-deno",
+	"deno.config": "./deno.jsonc",
+	"deno.unstable": true
 }
