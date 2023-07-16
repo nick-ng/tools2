@@ -82,7 +82,6 @@ const jiraFetch = (
 	};
 
 	if (!init || init.method === 'GET') {
-		// do cache
 		const cacheFilename = route.replaceAll(/[^a-z0-9\-_]/ig, '+').replace(
 			/^\+/,
 			'',
