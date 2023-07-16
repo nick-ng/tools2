@@ -1,7 +1,12 @@
 import { descriptionToMarkdown, JiraContent } from './jira-utils.ts';
 
 import { getCurrentBranch } from './git.ts';
-import { getToolsPath, readInput, writeDebug } from './general.ts';
+import {
+	fetchAndCacheJson,
+	getToolsPath,
+	readInput,
+	writeDebug,
+} from './general.ts';
 
 export type JiraIssue = {
 	key: string;
@@ -68,12 +73,25 @@ const jiraFetch = (
 		);
 	}
 
-	return fetch(`${jiraUrl}${route.startsWith('/') ? '' : '/'}${route}`, {
+	const fullUrl = `${jiraUrl}${route.startsWith('/') ? '' : '/'}${route}`;
+	const fullInit = {
 		...init,
 		headers: init?.headers
 			? { ...init.headers, ...extraHeaders }
 			: extraHeaders,
-	});
+	};
+
+	if (!init || init.method === 'GET') {
+		// do cache
+		const cacheFilename = route.replaceAll(/[^a-z0-9\-_]/ig, '+').replace(
+			/^\+/,
+			'',
+		);
+
+		return fetchAndCacheJson(fullUrl, fullInit, cacheFilename);
+	}
+
+	return fetch(fullUrl, fullInit);
 };
 
 export const getJiraIssueFromGitBranch = async (): Promise<string[]> => {

@@ -2,6 +2,7 @@
 .tmp.txt
 
 /debug
+/cache
 
 cognito-*
 aws*
