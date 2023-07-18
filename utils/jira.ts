@@ -1,4 +1,9 @@
-import { descriptionToMarkdown, JiraContent } from './jira-utils.ts';
+import {
+	colourStatus,
+	colourUrl,
+	descriptionToMarkdown,
+	JiraContent,
+} from './jira-utils.ts';
 
 import { getCurrentBranch } from './git.ts';
 import {
@@ -34,7 +39,6 @@ export type MyJiraStatus = {
 	key: string;
 };
 
-// @todo(nick-ng): cache get requests
 const jiraFetch = (
 	route: string,
 	init?:
@@ -128,7 +132,9 @@ export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
 	const jiraUrl = Deno.env.get('JIRA_URL');
 	const { fields } = jiraIssue;
 	console.info(
-		`Ticket No.: ${jiraIssue.key} - ${jiraUrl}/browse/${jiraIssue.key}`,
+		`Ticket No.: ${jiraIssue.key} - ${
+			colourUrl(`${jiraUrl}/browse/${jiraIssue.key}`)
+		}`,
 	);
 	console.info(
 		'Assignee:',
@@ -136,7 +142,7 @@ export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
 			? fields.assignee?.displayName
 			: 'Not assigned',
 	);
-	console.info('Status:', fields.status.name);
+	console.info('Status:', colourStatus(fields.status.name));
 	console.info('Summary:', fields.summary);
 	console.info(
 		`Description:\n${descriptionToMarkdown(fields.description)}`,
@@ -227,7 +233,10 @@ export const applyJiraIssueTransition = async (
 		return transitionName || transitionId;
 	}
 
-	console.error('res.text()', await res.text());
+	if (res instanceof Response) {
+		console.error('res.text()', await res.text());
+	}
+
 	console.error('res', res);
 	console.error('route', route);
 	console.error('desiredTransitions', {
@@ -302,15 +311,31 @@ export const assignToJiraIssue = async (
 		return 'ok';
 	}
 
-	console.error('res.text()', await res.text());
+	if (res instanceof Response) {
+		console.error('res.text()', await res.text());
+	}
+
 	console.error('res', res);
 	console.error('route', route);
 	console.error('assigneeName', assigneeAccountId);
 	throw new Error();
 };
 
-const getMDBody = (text: string): string => {
-	return text.replace(/{{/g, '`').replace(/}}/g, '`');
+const commentBodyToMd = (text: string): string => {
+	return text
+		.replace(/{{/g, '`').replace(/}}/g, '`') // unformatted text"
+		.replace(/{noformat}/g, '```') // code blocks
+		.replace(/\[.+\|.+\|?.*\]/g, (match) => {
+			const [name, url] = match.replace(/^\[/, '').replace(/\]$/, '').split(
+				'|',
+			);
+
+			if (name !== url) {
+				return `[${name}](${colourUrl(url)}`;
+			}
+
+			return colourUrl(url);
+		}); // URLs
 };
 
 export const getJiraIssueComments = async (ticketNumber: string) => {
@@ -330,7 +355,7 @@ export const getJiraIssueComments = async (ticketNumber: string) => {
 	return res1Json.comments.map((c) => ({
 		...c,
 		createdDate: new Date(c.created),
-		mdBody: getMDBody(c.body),
+		mdBody: commentBodyToMd(c.body),
 	}));
 };
 
@@ -378,6 +403,10 @@ export const getJiraBoard = async (
 		}
 
 		console.info(`Trying page ${i + 1} of sprints.`);
+
+		await (new Promise((resolve) => {
+			setTimeout(resolve, 1000);
+		}));
 	}
 
 	if (!activeSprint) {

@@ -90,7 +90,13 @@ export const fetchAndCacheJson = async (
 		| (RequestInit)
 		| undefined,
 	cacheFilename: string,
-) => {
+): Promise<
+	{
+		status: number;
+		// deno-lint-ignore no-explicit-any
+		json: () => Promise<any>;
+	} | Response
+> => {
 	const existingResponseString = readCache(cacheFilename);
 
 	if (existingResponseString) {

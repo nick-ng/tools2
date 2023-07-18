@@ -5,6 +5,9 @@ type JiraContentText = {
 	text: string;
 	marks?: {
 		type: string;
+		attrs: {
+			[key: string]: string;
+		};
 	}[];
 };
 
@@ -52,7 +55,42 @@ export type JiraContent = (
 	| JiraContentMediaSingle
 )[];
 
+export const colourUrl = (url: string): string => {
+	return `\x1b[4m\x1b[36m${url}\x1b[0m`;
+};
+
+export const colourStatus = (status: string): string => {
+	switch (status.toLowerCase()) {
+		case 'done': {
+			return `\x1b[1m\x1b[34m${status}\x1b[0m`;
+		}
+		case 'in progress': {
+			return `\x1b[32m${status}\x1b[0m`;
+		}
+		case 'review': {
+			return `\x1b[1m\x1b[33m${status}\x1b[0m`;
+		}
+		case 'blocked': {
+			return `\x1b[31m${status}\x1b[0m`;
+		}
+		default: {
+			return status;
+		}
+	}
+};
+
 const parseText = (content: JiraContentText): string => {
+	const httpHrefAttr = content.marks?.find((m) => m.type === 'link')?.attrs
+		?.href;
+
+	if (httpHrefAttr) {
+		if (httpHrefAttr === content?.text) {
+			return colourUrl(httpHrefAttr);
+		}
+
+		return `[${content?.text}](${colourUrl(httpHrefAttr)}`;
+	}
+
 	return content?.text || '';
 };
 

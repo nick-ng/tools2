@@ -1,4 +1,5 @@
 import { formatDate } from './utils/general.ts';
+import { colourStatus, colourUrl } from './utils/jira-utils.ts';
 import {
 	applyJiraIssueTransition,
 	assignToJiraIssue,
@@ -45,7 +46,10 @@ const main = async () => {
 	switch (Deno.args[0]) {
 		case 'l':
 		case 'link': {
-			console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
+			if (jiraTicketNumber) {
+				console.info(colourUrl(`${JIRA_URL}/browse/${jiraTicketNumber}`));
+			}
+
 			break;
 		}
 		case 'b':
@@ -94,7 +98,7 @@ const main = async () => {
 				return getStatusValue(a[0].toLowerCase()) -
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues], i) => {
-				console.info(`\n${status}`);
+				console.info(`\n${colourStatus(status)}`);
 				issues.forEach((issue) => {
 					console.info(
 						`- ${issue.key}: ${issue.summary} ${
@@ -181,7 +185,9 @@ const main = async () => {
 						if (result === '0') {
 							// nothing
 						} else if (result) {
-							console.info(`${jiraTicketNumber} is now "${result}"`);
+							console.info(
+								`${jiraTicketNumber} is now "${colourStatus(result)}"`,
+							);
 						} else {
 							console.error(
 								`Error when updating status of ${jiraTicketNumber}`,

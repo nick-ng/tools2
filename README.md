@@ -26,5 +26,4 @@ source <path-to-this-repo>/dot-bash-rc
 
 ### ToDo Comments
 
-- jira.ts:201: @todo(nick-ng): animate the carousel horse moving across the screen.
-- utils/jira.ts:37: @todo(nick-ng): cache get requests
+- jira.ts:207: @todo(nick-ng): animate the carousel horse moving across the screen.
