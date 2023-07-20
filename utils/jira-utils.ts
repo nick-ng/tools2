@@ -61,10 +61,10 @@ export const colourUrl = (url: string): string => {
 
 export const colourStatus = (status: string): string => {
 	switch (status.toLowerCase()) {
-		case 'done': {
+		case 'in progress': {
 			return `\x1b[1m\x1b[34m${status}\x1b[0m`;
 		}
-		case 'in progress': {
+		case 'done': {
 			return `\x1b[32m${status}\x1b[0m`;
 		}
 		case 'review': {
@@ -74,7 +74,7 @@ export const colourStatus = (status: string): string => {
 			return `\x1b[31m${status}\x1b[0m`;
 		}
 		default: {
-			return status;
+			return `\x1b[1m\x1b[90m${status}\x1b[0m`;
 		}
 	}
 };
