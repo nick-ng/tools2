@@ -47,7 +47,7 @@ const main = async () => {
 		case 'l':
 		case 'link': {
 			if (jiraTicketNumber) {
-				console.info(colourUrl(`${JIRA_URL}/browse/${jiraTicketNumber}`));
+				console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
 			}
 
 			break;
