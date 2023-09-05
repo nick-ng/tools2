@@ -18,7 +18,7 @@ type JiraContentHeading = {
 };
 
 type JiraContentParagraph = {
-	type: 'paragraph';
+	type: 'paragraph' | 'codeBlock';
 	content: JiraContentText[];
 };
 
@@ -102,7 +102,9 @@ const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
 	);
 };
 
-const parseParagraph = ({ content }: JiraContentParagraph): string => {
+const parseParagraph = (
+	{ content }: JiraContentParagraph,
+): string => {
 	return ['\n\n', ...content.map(parseText)].join(
 		'',
 	);
@@ -156,7 +158,8 @@ export const descriptionToMarkdown = (
 			case 'heading': {
 				return parseHeading(c);
 			}
-			case 'paragraph': {
+			case 'paragraph':
+			case 'codeBlock': {
 				return parseParagraph(c);
 			}
 			case 'bulletList': {
