@@ -1,4 +1,4 @@
-const CACHE_MAX_AGE_MS = 1000 * 60 * 5; // 5 minutes
+const CACHE_MAX_AGE_MS = 10; // 10 miliseconds
 
 export const readInput = async (prompt = 'Enter your text:', trim = false) => {
 	console.info(prompt);
