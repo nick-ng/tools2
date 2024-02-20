@@ -375,10 +375,9 @@ export const getJiraBoard = async (
 	const allSprints: JiraSprint[] = [];
 
 	for (let i = 0; i < limit * 1000; i += limit) {
-		const sprintsRes = await jiraFetch(
-			`/rest/agile/1.0/board/${boardId}/sprint?start=${i}&limit=${limit}`,
-			{ method: 'GET' },
-		);
+		const url =
+			`/rest/agile/1.0/board/${boardId}/sprint?startAt=${i}&maxResults=${limit}`;
+		const sprintsRes = await jiraFetch(url, { method: 'GET' });
 		const sprints = await sprintsRes.json() as {
 			values: JiraSprint[];
 		};
@@ -402,7 +401,7 @@ export const getJiraBoard = async (
 			break;
 		}
 
-		console.info(`Trying page ${i + 1} of sprints.`);
+		// console.info(`Trying page ${i + 1} of sprints.`);
 
 		await (new Promise((resolve) => {
 			setTimeout(resolve, 1000);
@@ -410,7 +409,7 @@ export const getJiraBoard = async (
 	}
 
 	if (!activeSprint) {
-		throw new Error('Couldn\'t find active sprint.');
+		throw new Error("Couldn't find active sprint.");
 	}
 
 	let interestedSprint = activeSprint;
