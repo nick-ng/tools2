@@ -46,6 +46,10 @@ type JiraContentMediaSingle = {
 	}[];
 };
 
+type JiraContentRule = {
+	type: 'rule'; // <hr />
+};
+
 export type JiraContent = (
 	| JiraContentText
 	| JiraContentHeading
@@ -53,7 +57,25 @@ export type JiraContent = (
 	| JiraContentListItem
 	| JiraContentBulletList
 	| JiraContentMediaSingle
+	| JiraContentRule
 )[];
+
+let tputColsPromise: Promise<Deno.CommandOutput> | 0 = 0;
+const getTerminalWidth = async () => {
+	if (typeof tputColsPromise === 'number') {
+		// @todo(nick-ng): this seems to return a different number to running `tput cols` in the terminal directly
+		const tputColsCmd = new Deno.Command('tput', {
+			args: ['cols'],
+		});
+
+		tputColsPromise = tputColsCmd.output();
+	}
+
+	const { stdout } = await tputColsPromise;
+	const stdoutString = new TextDecoder().decode(stdout);
+
+	return parseInt(stdoutString, 10);
+};
 
 export const colourUrl = (url: string): string => {
 	return `\x1b[4m\x1b[36m${url}\x1b[0m`;
@@ -131,9 +153,9 @@ const parseMediaSingle = ({}: JiraContentMediaSingle): string => {
 	return '\n\n<picture-goes-here>\n\n';
 };
 
-export const descriptionToMarkdown = (
+export const descriptionToMarkdown = async (
 	p?: { content: JiraContent; type: string } | null,
-): string => {
+): Promise<string> => {
 	if (!p) {
 		return 'No description.';
 	}
@@ -150,7 +172,7 @@ export const descriptionToMarkdown = (
 		);
 	}
 
-	return content.map((c) => {
+	const parsedContent = await Promise.all(content.map(async (c) => {
 		switch (c.type) {
 			case 'text': {
 				return parseText(c);
@@ -168,6 +190,10 @@ export const descriptionToMarkdown = (
 			case 'mediaSingle': {
 				return parseMediaSingle(c);
 			}
+			case 'rule': {
+				const w = await getTerminalWidth();
+				return `\n${''.padStart(w, '-')}\n`;
+			}
 			default: {
 				writeDebug(
 					'description-to-markdown-unexpected.json',
@@ -176,5 +202,7 @@ export const descriptionToMarkdown = (
 				throw new Error(`Unexpected Jira content: ${JSON.stringify(c)}`);
 			}
 		}
-	}).join('').trim().replaceAll(/\n{3,}/g, '\n\n');
+	}));
+
+	return parsedContent.join('').trim().replaceAll(/\n{3,}/g, '\n\n');
 };

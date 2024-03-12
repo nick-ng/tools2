@@ -128,7 +128,7 @@ export const getJiraIssue = async (
 	return jiraJson;
 };
 
-export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
+export const displayJiraIssue = async (jiraIssue: JiraIssue): Promise<void> => {
 	const jiraUrl = Deno.env.get('JIRA_URL');
 	const { fields } = jiraIssue;
 	console.info(
@@ -145,7 +145,7 @@ export const displayJiraIssue = (jiraIssue: JiraIssue): void => {
 	console.info('Status:', colourStatus(fields.status.name));
 	console.info('Summary:', fields.summary);
 	console.info(
-		`Description:\n${descriptionToMarkdown(fields.description)}`,
+		`Description:\n${await descriptionToMarkdown(fields.description)}`,
 	);
 
 	Deno.writeTextFileSync(
