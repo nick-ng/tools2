@@ -27,4 +27,3 @@ source <path-to-this-repo>/dot-bash-rc
 ### ToDo Comments
 
 - jira.ts:207: @todo(nick-ng): animate the carousel horse moving across the screen. `tput cols` gets the width of the terminal
-- utils/jira-utils.ts:66: @todo(nick-ng): this seems to return a different number to running `tput cols` in the terminal directly
