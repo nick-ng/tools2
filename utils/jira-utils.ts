@@ -163,7 +163,7 @@ parseOrderedList = ({ content }: JiraContentOrderedList): string => {
 
 const parseMediaSingle = ({}: JiraContentMediaSingle): string => {
 	// blob:https://JIRA_URL/<?-uuid>#media-blob-url=true&id=<content[0].attrs.id>&contextId=<?-int>&collection=
-	return '\n\n<picture-goes-here>\n\n';
+	return '\n\n_picture-goes-here_\n\n';
 };
 
 parseContent = (c: JiraContent[number]) => {
