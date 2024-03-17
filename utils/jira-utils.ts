@@ -192,7 +192,7 @@ export const descriptionToMarkdown = async (
 			}
 			case 'rule': {
 				const w = await getTerminalWidth();
-				return `\n${''.padStart(w, '-')}\n`;
+				return `\n\n${''.padStart(w, '-')}\n\n`;
 			}
 			default: {
 				writeDebug(
