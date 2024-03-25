@@ -79,6 +79,7 @@ export const colourStatus = (status: string): string => {
 		case 'done': {
 			return `\x1b[32m${status}\x1b[0m`;
 		}
+		case 'testing':
 		case 'review': {
 			return `\x1b[1m\x1b[33m${status}\x1b[0m`;
 		}

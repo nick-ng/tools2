@@ -20,6 +20,7 @@ const getStatusValue = (status: string): number => {
 		case 'in progress': {
 			return 10;
 		}
+		case 'testing':
 		case 'review': {
 			return 20;
 		}
