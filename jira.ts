@@ -13,6 +13,7 @@ import {
 } from './utils/jira.ts';
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
+const MAX_ISSUES = 3;
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
@@ -97,15 +98,22 @@ const main = async () => {
 			Object.entries(issuesByStatus).sort((a, b) => {
 				return getStatusValue(a[0].toLowerCase()) -
 					getStatusValue(b[0].toLowerCase());
-			}).forEach(([status, issues], i) => {
+			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
-				issues.forEach((issue) => {
+				const tempIssues = status !== 'In Progress'
+					? issues.slice(0, MAX_ISSUES)
+					: issues;
+				tempIssues.forEach((issue) => {
 					console.info(
 						`- ${issue.key}: ${issue.summary} ${
 							issue.assignee ? `- ${issue.assignee}` : ''
 						}`,
 					);
 				});
+
+				if ((issues.length - tempIssues.length) !== 0) {
+					console.info(`+${issues.length - tempIssues.length} more`);
+				}
 			});
 			return;
 		}
@@ -249,7 +257,7 @@ const main = async () => {
 		}
 		case 'help':
 		default: {
-			console.info('Nick 3\'s Jira CLI\n');
+			console.info("Nick 3's Jira CLI\n");
 			console.info('Commands');
 			console.info('- jira i <issue-key>: Jira issue');
 			console.info(

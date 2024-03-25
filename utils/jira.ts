@@ -404,7 +404,7 @@ export const getJiraBoard = async (
 		// console.info(`Trying page ${i + 1} of sprints.`);
 
 		await (new Promise((resolve) => {
-			setTimeout(resolve, 1000);
+			setTimeout(resolve, 90);
 		}));
 	}
 
