@@ -37,6 +37,7 @@ export type MyJiraStatus = {
 	summary: string;
 	assignee?: string;
 	key: string;
+	labels: string[];
 };
 
 const jiraFetch = (
@@ -440,6 +441,7 @@ export const getJiraBoard = async (
 				summary: string;
 				assignee: null | { displayName: string };
 				status: { name: string };
+				labels: string[];
 			};
 		}[];
 	};
@@ -452,7 +454,7 @@ export const getJiraBoard = async (
 
 	for (let i = 0; i < sprintIssues.issues.length; i++) {
 		const { key, fields } = sprintIssues.issues[i];
-		const { summary, assignee, status } = fields;
+		const { summary, assignee, status, labels } = fields;
 
 		if (!issuesByStatus[status.name]) {
 			issuesByStatus[status.name] = [];
@@ -463,6 +465,7 @@ export const getJiraBoard = async (
 			summary,
 			assignee: assignee?.displayName,
 			key,
+			labels,
 		});
 	}
 

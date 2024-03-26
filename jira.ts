@@ -105,10 +105,19 @@ const main = async () => {
 					? issues.slice(0, MAX_ISSUES)
 					: issues;
 				tempIssues.forEach((issue) => {
-					console.info(
-						`- ${issue.key}: ${issue.summary} ${
+					let line = `- ${issue.key}: ${issue.summary} ${
+						issue.assignee ? `- ${issue.assignee}` : ''
+					}`;
+
+					if (issue.labels.length > 0) {
+						const labels = issue.labels.join(', ');
+						line = `- ${issue.key} (${labels}): ${issue.summary} ${
 							issue.assignee ? `- ${issue.assignee}` : ''
-						}`,
+						}`;
+					}
+
+					console.info(
+						line,
 					);
 				});
 
