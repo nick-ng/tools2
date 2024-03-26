@@ -1,5 +1,5 @@
-import { formatDate } from './utils/general.ts';
-import { colourStatus, colourUrl } from './utils/jira-utils.ts';
+import { formatDate, getToolsPath } from './utils/general.ts';
+import { colourStatus } from './utils/jira-utils.ts';
 import {
 	applyJiraIssueTransition,
 	assignToJiraIssue,
@@ -37,6 +37,15 @@ const main = async () => {
 
 	if (!jiraTicketNumber) {
 		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
+	} else if (jiraTicketNumber.toLowerCase() === 'curr') {
+		try {
+			jiraTicketNumber = Deno.readTextFileSync(`${getToolsPath()}/current.txt`);
+			console.info(jiraTicketNumber);
+		} catch (e) {
+			console.info(e);
+			console.info("\ncouldn't read current.txt\n");
+			return;
+		}
 	} else if (
 		jiraTicketNumber.match(/^\d+$/) && Deno.env.get('DEFAULT_ISSUE_PREFIX')
 	) {
@@ -181,6 +190,14 @@ const main = async () => {
 
 					break;
 				}
+				case 'set':
+				case 'set-current': {
+					Deno.writeTextFileSync(
+						`${getToolsPath()}/current.txt`,
+						jiraTicketNumber.toUpperCase(),
+					);
+					break;
+				}
 				case 'a':
 				case 'assign': {
 					let changeStatus = false;
@@ -188,6 +205,11 @@ const main = async () => {
 						const me = await getMyJiraUser();
 
 						await assignToJiraIssue(jiraTicketNumber, me.accountId);
+
+						Deno.writeTextFileSync(
+							`${getToolsPath()}/current.txt`,
+							jiraTicketNumber.toUpperCase(),
+						);
 
 						changeStatus = true;
 					}
