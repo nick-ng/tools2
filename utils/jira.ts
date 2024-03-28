@@ -460,13 +460,23 @@ export const getJiraBoard = async (
 			issuesByStatus[status.name] = [];
 		}
 
-		issuesByStatus[status.name].push({
-			status: status.name,
-			summary,
-			assignee: assignee?.displayName,
-			key,
-			labels,
-		});
+		if (status.name.toLocaleLowerCase() === 'done') {
+			issuesByStatus[status.name].unshift({
+				status: status.name,
+				summary,
+				assignee: assignee?.displayName,
+				key,
+				labels,
+			});
+		} else {
+			issuesByStatus[status.name].push({
+				status: status.name,
+				summary,
+				assignee: assignee?.displayName,
+				key,
+				labels,
+			});
+		}
 	}
 
 	return { sprint: interestedSprint, issuesByStatus };
