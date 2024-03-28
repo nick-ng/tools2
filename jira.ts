@@ -191,6 +191,7 @@ const main = async () => {
 					break;
 				}
 				case 'set':
+				case 'setcurrent':
 				case 'set-current': {
 					Deno.writeTextFileSync(
 						`${getToolsPath()}/current.txt`,
