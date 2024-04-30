@@ -292,6 +292,8 @@ const main = async () => {
 		default: {
 			console.info("Nick 3's Jira CLI\n");
 			console.info('Commands');
+			console.info('- jira set <issue-key>: Set "curr" alias');
+			console.info('  - Use "curr" in-place of <issue-key>');
 			console.info('- jira i <issue-key>: Jira issue');
 			console.info(
 				'  - jira i <issue-key> assign:[me, no-one]: Assign Jira issue to yourself or unassign Jira issue',
