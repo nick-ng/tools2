@@ -13,7 +13,7 @@ import {
 } from './utils/jira.ts';
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
-const MAX_ISSUES = 3;
+const DEFAULT_MAX_ISSUES = 999;
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
@@ -105,13 +105,18 @@ const main = async () => {
 				console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
 			}
 
+			let maxIssues = parseInt(Deno.args[2], 10);
+			if (isNaN(maxIssues)) {
+				maxIssues = DEFAULT_MAX_ISSUES;
+			}
+
 			Object.entries(issuesByStatus).sort((a, b) => {
 				return getStatusValue(a[0].toLowerCase()) -
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
 				const tempIssues = status !== 'In Progress'
-					? issues.slice(0, MAX_ISSUES)
+					? issues.slice(0, maxIssues)
 					: issues;
 				tempIssues.forEach((issue) => {
 					let line = `- ${issue.key}: ${issue.summary} ${
