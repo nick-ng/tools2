@@ -13,7 +13,7 @@ import {
 } from './utils/jira.ts';
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
-const MAX_ISSUES = 3;
+const DEFAULT_MAX_ISSUES = 999;
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
@@ -32,20 +32,36 @@ const getStatusValue = (status: string): number => {
 	}
 };
 
+const getCurrentTicketNumber = (): string => {
+	try {
+		const jiraTicketNumber = Deno.readTextFileSync(
+			`${getToolsPath()}/current.txt`,
+		);
+		console.info('Current Jira ticket:', jiraTicketNumber);
+		return jiraTicketNumber;
+	} catch (e) {
+		console.info("\ncouldn't read current.txt\n");
+
+		throw e;
+	}
+};
+
 const main = async () => {
 	let jiraTicketNumber = Deno.args[1];
 
 	if (!jiraTicketNumber) {
-		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
-	} else if (jiraTicketNumber.toLowerCase() === 'curr') {
-		try {
-			jiraTicketNumber = Deno.readTextFileSync(`${getToolsPath()}/current.txt`);
-			console.info(jiraTicketNumber);
-		} catch (e) {
-			console.info(e);
-			console.info("\ncouldn't read current.txt\n");
-			return;
+		const matches = await getJiraIssueFromGitBranch();
+		if (matches.length > 0) {
+			jiraTicketNumber = matches[0];
+			console.info(
+				'Jira Ticket from git branch:',
+				jiraTicketNumber.toUpperCase(),
+			);
+		} else {
+			jiraTicketNumber = getCurrentTicketNumber();
 		}
+	} else if (jiraTicketNumber.toLowerCase() === 'curr') {
+		jiraTicketNumber = getCurrentTicketNumber();
 	} else if (
 		jiraTicketNumber.match(/^\d+$/) && Deno.env.get('DEFAULT_ISSUE_PREFIX')
 	) {
@@ -105,13 +121,18 @@ const main = async () => {
 				console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
 			}
 
+			let maxIssues = parseInt(Deno.args[2], 10);
+			if (isNaN(maxIssues)) {
+				maxIssues = DEFAULT_MAX_ISSUES;
+			}
+
 			Object.entries(issuesByStatus).sort((a, b) => {
 				return getStatusValue(a[0].toLowerCase()) -
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
 				const tempIssues = status !== 'In Progress'
-					? issues.slice(0, MAX_ISSUES)
+					? issues.slice(0, maxIssues)
 					: issues;
 				tempIssues.forEach((issue) => {
 					let line = `- ${issue.key}: ${issue.summary} ${

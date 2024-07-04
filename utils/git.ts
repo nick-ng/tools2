@@ -11,7 +11,8 @@ export const getCurrentBranch = async (): Promise<string> => {
 	const branchPart = parts.find((p) => p.startsWith('On branch '));
 
 	if (!branchPart) {
-		throw new Error('Couldn\'t get Git branch name.');
+		console.error("Couldn't get Git branch name.");
+		return '';
 	}
 
 	return branchPart.replace('On branch ', '');
