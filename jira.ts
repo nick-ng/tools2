@@ -32,20 +32,36 @@ const getStatusValue = (status: string): number => {
 	}
 };
 
+const getCurrentTicketNumber = (): string => {
+	try {
+		const jiraTicketNumber = Deno.readTextFileSync(
+			`${getToolsPath()}/current.txt`,
+		);
+		console.info('Current Jira ticket:', jiraTicketNumber);
+		return jiraTicketNumber;
+	} catch (e) {
+		console.info("\ncouldn't read current.txt\n");
+
+		throw e;
+	}
+};
+
 const main = async () => {
 	let jiraTicketNumber = Deno.args[1];
 
 	if (!jiraTicketNumber) {
-		jiraTicketNumber = (await getJiraIssueFromGitBranch())[0];
-	} else if (jiraTicketNumber.toLowerCase() === 'curr') {
-		try {
-			jiraTicketNumber = Deno.readTextFileSync(`${getToolsPath()}/current.txt`);
-			console.info(jiraTicketNumber);
-		} catch (e) {
-			console.info(e);
-			console.info("\ncouldn't read current.txt\n");
-			return;
+		const matches = await getJiraIssueFromGitBranch();
+		if (matches.length > 0) {
+			jiraTicketNumber = matches[0];
+			console.info(
+				'Jira Ticket from git branch:',
+				jiraTicketNumber.toUpperCase(),
+			);
+		} else {
+			jiraTicketNumber = getCurrentTicketNumber();
 		}
+	} else if (jiraTicketNumber.toLowerCase() === 'curr') {
+		jiraTicketNumber = getCurrentTicketNumber();
 	} else if (
 		jiraTicketNumber.match(/^\d+$/) && Deno.env.get('DEFAULT_ISSUE_PREFIX')
 	) {
