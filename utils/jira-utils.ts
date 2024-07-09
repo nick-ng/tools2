@@ -52,6 +52,20 @@ type JiraContentMediaSingle = {
 	}[];
 };
 
+type JiraContentMediaGroup = {
+	type: 'mediaGroup';
+	content: {
+		type: string;
+		attrs: {
+			id: string;
+			type: string;
+			collection: string;
+			width?: number;
+			height?: number;
+		};
+	}[];
+};
+
 type JiraContentRule = {
 	type: 'rule'; // <hr />
 };
@@ -64,6 +78,7 @@ export type JiraContent = (
 	| JiraContentBulletList
 	| JiraContentOrderedList
 	| JiraContentMediaSingle
+	| JiraContentMediaGroup
 	| JiraContentRule
 )[];
 
@@ -162,9 +177,20 @@ parseOrderedList = ({ content }: JiraContentOrderedList): string => {
 	return content.map((listItem, i) => parseListItem(listItem, i + 1)).join('');
 };
 
-const parseMediaSingle = ({}: JiraContentMediaSingle): string => {
+const parseMediaSingle = (
+	{ content }: JiraContentMediaSingle | JiraContentMediaGroup,
+): string => {
 	// blob:https://JIRA_URL/<?-uuid>#media-blob-url=true&id=<content[0].attrs.id>&contextId=<?-int>&collection=
-	return '\n\n_picture-goes-here_\n\n';
+
+	return content.map((c) => {
+		if (
+			typeof c.attrs.width === 'number' || typeof c.attrs.height === 'number'
+		) {
+			return '\n\n_picture-goes-here_\n\n';
+		}
+
+		return '\n\n_file-goes-here_\n\n';
+	}).join('\n');
 };
 
 parseContent = (c: JiraContent[number]) => {
@@ -185,6 +211,7 @@ parseContent = (c: JiraContent[number]) => {
 		case 'orderedList': {
 			return parseOrderedList(c);
 		}
+		case 'mediaGroup':
 		case 'mediaSingle': {
 			return parseMediaSingle(c);
 		}
@@ -192,7 +219,7 @@ parseContent = (c: JiraContent[number]) => {
 			return `\n\n${''.padStart(80, '-')}\n\n`;
 		}
 		default: {
-			throw new Error(`Unexpected Jira content: ${JSON.stringify(c)}`);
+			return `\n\n${JSON.stringify(c, null, '  ')}\n\n`;
 		}
 	}
 };
