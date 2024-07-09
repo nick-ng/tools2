@@ -83,13 +83,15 @@ const main = async () => {
 		case 'board': {
 			if (!Deno.args[1]) {
 				console.error('Missing board number.');
-				console.info('Usage: jira board <board-number>');
+				console.info(
+					'Usage: jira board <board-number> <sprint-adjustment> <max-issues-per-category>',
+				);
 				return;
 			}
 
 			const { sprint, issuesByStatus } = await getJiraBoard(
 				Deno.args[1],
-				parseInt(Deno.args[2], 0),
+				parseInt(Deno.args[2], 10),
 			);
 
 			const msLeft = new Date(sprint.endDate).valueOf() - new Date().valueOf();
@@ -121,7 +123,7 @@ const main = async () => {
 				console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
 			}
 
-			let maxIssues = parseInt(Deno.args[2], 10);
+			let maxIssues = parseInt(Deno.args[3], 10);
 			if (isNaN(maxIssues)) {
 				maxIssues = DEFAULT_MAX_ISSUES;
 			}
