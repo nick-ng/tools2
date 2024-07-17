@@ -46,16 +46,22 @@ const getCurrentTicketNumber = (): string => {
 	}
 };
 
+const displayInfo = (info: string[]): void => {
+	for (let i = 0; i < info.length; i++) {
+		console.info(info[i]);
+	}
+};
+
 const main = async () => {
+	const info: string[] = [];
 	let jiraTicketNumber = Deno.args[1];
 
-	if (!jiraTicketNumber) {
+	if (!jiraTicketNumber || jiraTicketNumber === 'link-only') {
 		const matches = await getJiraIssueFromGitBranch();
 		if (matches.length > 0) {
 			jiraTicketNumber = matches[0];
-			console.info(
-				'Jira Ticket from git branch:',
-				jiraTicketNumber.toUpperCase(),
+			info.push(
+				`Jira ticket number from git branch: ${jiraTicketNumber.toUpperCase()}`,
 			);
 		} else {
 			jiraTicketNumber = getCurrentTicketNumber();
@@ -73,6 +79,10 @@ const main = async () => {
 	switch (Deno.args[0]) {
 		case 'l':
 		case 'link': {
+			if (Deno.args[1] !== 'link-only' && Deno.args[2] !== 'link-only') {
+				displayInfo(info);
+			}
+
 			if (jiraTicketNumber) {
 				console.info(`${JIRA_URL}/browse/${jiraTicketNumber}`);
 			}

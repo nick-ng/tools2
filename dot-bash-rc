@@ -19,7 +19,7 @@ jiraboard() {
 }
 
 jiralink() {
-  TMP=$(jira link $*)
+  TMP=$(jira link $* link-only)
 
   echo $TMP | xclip -selection clipboard
 
