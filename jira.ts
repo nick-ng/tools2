@@ -13,7 +13,7 @@ import {
 } from './utils/jira.ts';
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
-const DEFAULT_MAX_ISSUES = 999;
+const DEFAULT_MAX_ISSUES = 15;
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
