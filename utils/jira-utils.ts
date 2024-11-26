@@ -11,6 +11,13 @@ type JiraContentText = {
 	}[];
 };
 
+type JiraContentInlineCard = {
+	type: 'inlineCard',
+	attrs: {
+		url: string
+	}
+}
+
 type JiraContentHeading = {
 	type: 'heading';
 	attrs: { level: number };
@@ -72,6 +79,7 @@ type JiraContentRule = {
 
 export type JiraContent = (
 	| JiraContentText
+	| JiraContentInlineCard
 	| JiraContentHeading
 	| JiraContentParagraph
 	| JiraContentListItem
@@ -124,10 +132,14 @@ const parseText = (content: JiraContentText): string => {
 	return content?.text || '';
 };
 
+const parseInlineCard = (content: JiraContentInlineCard): string => {
+	return `(${content.attrs.url})`
+}
+
 const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
 	const { level } = attrs;
 
-	return ['\n\n', ''.padStart(level, '#'), ' ', ...content.map(parseText)].join(
+	return ['\n\n', ''.padStart(level, '#'), ' ', ...content.map(parseContent)].join(
 		'',
 	);
 };
@@ -135,7 +147,7 @@ const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
 const parseParagraph = (
 	{ content }: JiraContentParagraph,
 ): string => {
-	return ['\n\n', ...content.map(parseText)].join(
+	return ['\n\n', ...content.map(parseContent)].join(
 		'',
 	);
 };
@@ -197,6 +209,9 @@ parseContent = (c: JiraContent[number]) => {
 	switch (c.type) {
 		case 'text': {
 			return parseText(c);
+		}
+		case 'inlineCard': {
+			return parseInlineCard(c)
 		}
 		case 'heading': {
 			return parseHeading(c);

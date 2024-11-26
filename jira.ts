@@ -14,6 +14,7 @@ import {
 
 const JIRA_URL = Deno.env.get('JIRA_URL');
 const DEFAULT_MAX_ISSUES = 15;
+const DEFAULT_DONE_ISSUES = 5;
 
 const getStatusValue = (status: string): number => {
 	switch (status) {
@@ -134,8 +135,10 @@ const main = async () => {
 			}
 
 			let maxIssues = parseInt(Deno.args[3], 10);
+			let doneIssues = maxIssues
 			if (isNaN(maxIssues)) {
 				maxIssues = DEFAULT_MAX_ISSUES;
+				doneIssues = DEFAULT_DONE_ISSUES
 			}
 
 			Object.entries(issuesByStatus).sort((a, b) => {
@@ -143,9 +146,22 @@ const main = async () => {
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
-				const tempIssues = status !== 'In Progress'
-					? issues.slice(0, maxIssues)
-					: issues;
+				let limit = maxIssues
+				switch (status) {
+					case 'In Progress': {
+						limit = 9999;
+						break;
+					}
+					case 'Done': {
+						limit = doneIssues
+						break;
+					}
+					default: {
+						// limit already set to maxIssues
+					}
+				}
+
+				const tempIssues = issues.slice(0, limit)
 				tempIssues.forEach((issue) => {
 					let line = `- ${issue.key}: ${issue.summary} ${
 						issue.assignee ? `- ${issue.assignee}` : ''
