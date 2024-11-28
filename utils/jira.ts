@@ -132,19 +132,20 @@ export const getJiraIssue = async (
 export const displayJiraIssue = async (jiraIssue: JiraIssue): Promise<void> => {
 	const jiraUrl = Deno.env.get('JIRA_URL');
 	const { fields } = jiraIssue;
+	console.info(`${fields.summary}  `);
 	console.info(
 		`Ticket No.: ${jiraIssue.key} - ${
 			colourUrl(`${jiraUrl}/browse/${jiraIssue.key}`)
-		}`,
+		}  `,
 	);
 	console.info(
-		'Assignee:',
-		fields.assignee?.displayName
-			? fields.assignee?.displayName
-			: 'Not assigned',
+		`Assignee: ${
+			fields.assignee?.displayName
+				? fields.assignee?.displayName
+				: 'Not assigned'
+		}  `,
 	);
-	console.info('Status:', colourStatus(fields.status.name));
-	console.info('Summary:', fields.summary);
+	console.info(`Status: ${colourStatus(fields.status.name)}  `);
 	console.info(
 		`Description:\n${await descriptionToMarkdown(fields.description)}`,
 	);

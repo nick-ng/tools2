@@ -18,6 +18,13 @@ type JiraContentInlineCard = {
 	}
 }
 
+type JiraContentEmoji = {
+	type: 'emoji'
+	attrs: {
+		shortName: string
+	}
+}
+
 type JiraContentHeading = {
 	type: 'heading';
 	attrs: { level: number };
@@ -80,6 +87,7 @@ type JiraContentRule = {
 export type JiraContent = (
 	| JiraContentText
 	| JiraContentInlineCard
+	| JiraContentEmoji
 	| JiraContentHeading
 	| JiraContentParagraph
 	| JiraContentListItem
@@ -134,6 +142,10 @@ const parseText = (content: JiraContentText): string => {
 
 const parseInlineCard = (content: JiraContentInlineCard): string => {
 	return `(${content.attrs.url})`
+}
+
+const parseEmoji = (content: JiraContentEmoji): string => {
+	return `{e${content.attrs.shortName}}`
 }
 
 const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
@@ -212,6 +224,9 @@ parseContent = (c: JiraContent[number]) => {
 		}
 		case 'inlineCard': {
 			return parseInlineCard(c)
+		}
+		case 'emoji': {
+			return parseEmoji(c)
 		}
 		case 'heading': {
 			return parseHeading(c);
