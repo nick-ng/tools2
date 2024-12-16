@@ -25,6 +25,13 @@ type JiraContentEmoji = {
 	}
 }
 
+type JiraContentMention = {
+	type: "mention"
+	attrs: {
+		text: string
+	}
+}
+
 type JiraContentHeading = {
 	type: 'heading';
 	attrs: { level: number };
@@ -88,6 +95,7 @@ export type JiraContent = (
 	| JiraContentText
 	| JiraContentInlineCard
 	| JiraContentEmoji
+	| JiraContentMention
 	| JiraContentHeading
 	| JiraContentParagraph
 	| JiraContentListItem
@@ -146,6 +154,10 @@ const parseInlineCard = (content: JiraContentInlineCard): string => {
 
 const parseEmoji = (content: JiraContentEmoji): string => {
 	return `{e${content.attrs.shortName}}`
+}
+
+const parseMention = (content: JiraContentMention): string => {
+	return `${content.attrs.text}`
 }
 
 const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
@@ -227,6 +239,9 @@ parseContent = (c: JiraContent[number]) => {
 		}
 		case 'emoji': {
 			return parseEmoji(c)
+		}
+		case 'mention': {
+			return parseMention(c)
 		}
 		case 'heading': {
 			return parseHeading(c);
