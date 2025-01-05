@@ -375,11 +375,16 @@ export const getJiraBoard = async (
 	const limit = 50;
 
 	const allSprints: JiraSprint[] = [];
-
+	let isSprints = true;
 	for (let i = 0; i < limit * 1000; i += limit) {
 		const url =
 			`/rest/agile/1.0/board/${boardId}/sprint?startAt=${i}&maxResults=${limit}`;
 		const sprintsRes = await jiraFetch(url, { method: 'GET' });
+
+		if (sprintsRes.status < 200 || sprintsRes.status > 299) {
+			isSprints = false;
+			break;
+		}
 		const sprints = await sprintsRes.json() as {
 			values: JiraSprint[];
 		};
@@ -410,29 +415,40 @@ export const getJiraBoard = async (
 		}));
 	}
 
-	if (!activeSprint) {
-		throw new Error("Couldn't find active sprint.");
-	}
-
+	let issueUrl = `/rest/agile/1.0/board/${boardId}/issue`;
 	let interestedSprint = activeSprint;
 
-	if (checkAllSprints) {
-		allSprints.sort((a, b) => {
-			const aDate = new Date(a.startDate);
-			const bDate = new Date(b.startDate);
+	if (isSprints) {
+		if (!activeSprint) {
+			throw new Error("Couldn't find active sprint.");
+		}
 
-			return aDate.valueOf() - bDate.valueOf();
-		});
 
-		const indexOfActiveSprint = allSprints.findIndex((s) =>
-			s.id === (activeSprint as JiraSprint).id
-		);
+		if (checkAllSprints) {
+			allSprints.sort((a, b) => {
+				const aDate = new Date(a.startDate);
+				const bDate = new Date(b.startDate);
 
-		interestedSprint = allSprints[indexOfActiveSprint + sprintAdjustment];
+				return aDate.valueOf() - bDate.valueOf();
+			});
+
+			const indexOfActiveSprint = allSprints.findIndex((s) =>
+				s.id === (activeSprint as JiraSprint).id
+			);
+
+			interestedSprint = allSprints[indexOfActiveSprint + sprintAdjustment];
+		}
+
+		if (!interestedSprint) {
+			throw new Error("halp!")
+		}
+
+		issueUrl =
+			`/rest/agile/1.0/board/${boardId}/sprint/${interestedSprint.id}/issue`;
 	}
 
 	const sprintIssuesRes = await jiraFetch(
-		`/rest/agile/1.0/board/${boardId}/sprint/${interestedSprint.id}/issue`, // ?fields=summary,assignee,status
+		issueUrl, // ?fields=summary,assignee,status
 		{ method: 'GET' },
 	);
 	const sprintIssues = await sprintIssuesRes.json() as {

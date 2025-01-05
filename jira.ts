@@ -105,40 +105,45 @@ const main = async () => {
 				parseInt(Deno.args[2], 10),
 			);
 
-			const msLeft = new Date(sprint.endDate).valueOf() - new Date().valueOf();
-			const daysLeft = msLeft / (1000 * 60 * 60 * 24);
+			if (sprint) {
+				const msLeft = new Date(sprint.endDate).valueOf() -
+					new Date().valueOf();
+				const daysLeft = msLeft / (1000 * 60 * 60 * 24);
 
-			console.info(`\nToday: ${formatDate(new Date())}\n`);
+				console.info(`\nToday: ${formatDate(new Date())}\n`);
 
-			if (sprint.name) {
-				console.info(
-					`Sprint: ${sprint.name} (${
-						formatDate(new Date(sprint.startDate))
-					} - ${formatDate(new Date(sprint.endDate))})`,
-				);
+				if (sprint.name) {
+					console.info(
+						`Sprint: ${sprint.name} (${
+							formatDate(new Date(sprint.startDate))
+						} - ${formatDate(new Date(sprint.endDate))})`,
+					);
+				} else {
+					console.info(
+						`${formatDate(new Date(sprint.startDate))} - ${
+							formatDate(new Date(sprint.endDate))
+						}`,
+					);
+				}
+
+				if (sprint.goal) {
+					console.info(`Goal: ${sprint.goal}`);
+				}
+
+				if (daysLeft > 0) {
+					console.info(`Days left: ${daysLeft.toFixed(1)}`);
+				} else {
+					console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
+				}
 			} else {
-				console.info(
-					`${formatDate(new Date(sprint.startDate))} - ${
-						formatDate(new Date(sprint.endDate))
-					}`,
-				);
-			}
-
-			if (sprint.goal) {
-				console.info(`Goal: ${sprint.goal}`);
-			}
-
-			if (daysLeft > 0) {
-				console.info(`Days left: ${daysLeft.toFixed(1)}`);
-			} else {
-				console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
+				console.info('Kanban Board');
 			}
 
 			let maxIssues = parseInt(Deno.args[3], 10);
-			let doneIssues = maxIssues
+			let doneIssues = maxIssues;
 			if (isNaN(maxIssues)) {
 				maxIssues = DEFAULT_MAX_ISSUES;
-				doneIssues = DEFAULT_DONE_ISSUES
+				doneIssues = DEFAULT_DONE_ISSUES;
 			}
 
 			Object.entries(issuesByStatus).sort((a, b) => {
@@ -146,14 +151,14 @@ const main = async () => {
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
-				let limit = maxIssues
+				let limit = maxIssues;
 				switch (status) {
 					case 'In Progress': {
 						limit = 9999;
 						break;
 					}
 					case 'Done': {
-						limit = doneIssues
+						limit = doneIssues;
 						break;
 					}
 					default: {
@@ -161,7 +166,7 @@ const main = async () => {
 					}
 				}
 
-				const tempIssues = issues.slice(0, limit)
+				const tempIssues = issues.slice(0, limit);
 				tempIssues.forEach((issue) => {
 					let line = `- ${issue.key}: ${issue.summary} ${
 						issue.assignee ? `- ${issue.assignee}` : ''
