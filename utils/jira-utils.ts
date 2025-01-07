@@ -12,25 +12,25 @@ type JiraContentText = {
 };
 
 type JiraContentInlineCard = {
-	type: 'inlineCard',
+	type: 'inlineCard';
 	attrs: {
-		url: string
-	}
-}
+		url: string;
+	};
+};
 
 type JiraContentEmoji = {
-	type: 'emoji'
+	type: 'emoji';
 	attrs: {
-		shortName: string
-	}
-}
+		shortName: string;
+	};
+};
 
 type JiraContentMention = {
-	type: "mention"
+	type: 'mention';
 	attrs: {
-		text: string
-	}
-}
+		text: string;
+	};
+};
 
 type JiraContentHeading = {
 	type: 'heading';
@@ -111,12 +111,15 @@ export const colourUrl = (url: string): string => {
 };
 
 export const colourStatus = (status: string): string => {
-	switch (status.toLowerCase()) {
+	switch (status.trim().toLowerCase()) {
 		case 'in progress': {
 			return `\x1b[1m\x1b[34m${status}\x1b[0m`;
 		}
 		case 'done': {
 			return `\x1b[32m${status}\x1b[0m`;
+		}
+		case 'selected for development': {
+			return `\x1b[1m\x1b[36m${status}\x1b[0m`;
 		}
 		case 'testing':
 		case 'review': {
@@ -149,23 +152,24 @@ const parseText = (content: JiraContentText): string => {
 };
 
 const parseInlineCard = (content: JiraContentInlineCard): string => {
-	return `(${content.attrs.url})`
-}
+	return `(${content.attrs.url})`;
+};
 
 const parseEmoji = (content: JiraContentEmoji): string => {
-	return `{e${content.attrs.shortName}}`
-}
+	return `{e${content.attrs.shortName}}`;
+};
 
 const parseMention = (content: JiraContentMention): string => {
-	return `${content.attrs.text}`
-}
+	return `${content.attrs.text}`;
+};
 
 const parseHeading = ({ attrs, content }: JiraContentHeading): string => {
 	const { level } = attrs;
 
-	return ['\n\n', ''.padStart(level, '#'), ' ', ...content.map(parseContent)].join(
-		'',
-	);
+	return ['\n\n', ''.padStart(level, '#'), ' ', ...content.map(parseContent)]
+		.join(
+			'',
+		);
 };
 
 const parseParagraph = (
@@ -235,13 +239,13 @@ parseContent = (c: JiraContent[number]) => {
 			return parseText(c);
 		}
 		case 'inlineCard': {
-			return parseInlineCard(c)
+			return parseInlineCard(c);
 		}
 		case 'emoji': {
-			return parseEmoji(c)
+			return parseEmoji(c);
 		}
 		case 'mention': {
-			return parseMention(c)
+			return parseMention(c);
 		}
 		case 'heading': {
 			return parseHeading(c);

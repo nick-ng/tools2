@@ -15,18 +15,22 @@ import {
 const JIRA_URL = Deno.env.get('JIRA_URL');
 const DEFAULT_MAX_ISSUES = 15;
 const DEFAULT_DONE_ISSUES = 5;
+const MAX_LINES = 31;
 
 const getStatusValue = (status: string): number => {
-	switch (status) {
-		case 'in progress': {
+	switch (status.trim().toLocaleLowerCase()) {
+		case 'done': {
 			return 10;
 		}
 		case 'testing':
 		case 'review': {
 			return 20;
 		}
-		case 'done': {
+		case 'in progress': {
 			return 30;
+		}
+		case 'selected for development': {
+			return 40;
 		}
 		default:
 			return 9999;
@@ -105,12 +109,15 @@ const main = async () => {
 				parseInt(Deno.args[2], 10),
 			);
 
+			let totalLines = 0;
+
 			if (sprint) {
 				const msLeft = new Date(sprint.endDate).valueOf() -
 					new Date().valueOf();
 				const daysLeft = msLeft / (1000 * 60 * 60 * 24);
 
 				console.info(`\nToday: ${formatDate(new Date())}\n`);
+				totalLines += 2;
 
 				if (sprint.name) {
 					console.info(
@@ -118,32 +125,40 @@ const main = async () => {
 							formatDate(new Date(sprint.startDate))
 						} - ${formatDate(new Date(sprint.endDate))})`,
 					);
+					totalLines += 1;
 				} else {
 					console.info(
 						`${formatDate(new Date(sprint.startDate))} - ${
 							formatDate(new Date(sprint.endDate))
 						}`,
 					);
+					totalLines += 1;
 				}
 
 				if (sprint.goal) {
 					console.info(`Goal: ${sprint.goal}`);
+					totalLines += 1;
 				}
 
 				if (daysLeft > 0) {
 					console.info(`Days left: ${daysLeft.toFixed(1)}`);
+					totalLines += 1;
 				} else {
 					console.info(`Sprint over (${daysLeft.toFixed(1)} days)`);
+					totalLines += 1;
 				}
 			} else {
-				console.info('Kanban Board');
+				console.info('\nKanban Board');
+				totalLines += 1;
 			}
 
 			let maxIssues = parseInt(Deno.args[3], 10);
+			let isCustomMaxIssues = true;
 			let doneIssues = maxIssues;
 			if (isNaN(maxIssues)) {
 				maxIssues = DEFAULT_MAX_ISSUES;
 				doneIssues = DEFAULT_DONE_ISSUES;
+				isCustomMaxIssues = false;
 			}
 
 			Object.entries(issuesByStatus).sort((a, b) => {
@@ -151,6 +166,7 @@ const main = async () => {
 					getStatusValue(b[0].toLowerCase());
 			}).forEach(([status, issues]) => {
 				console.info(`\n${colourStatus(status)}`);
+				totalLines += 2;
 				let limit = maxIssues;
 				switch (status) {
 					case 'In Progress': {
@@ -166,7 +182,14 @@ const main = async () => {
 					}
 				}
 
+				if (!isCustomMaxIssues) {
+					const remainingLines = MAX_LINES - totalLines;
+					limit = Math.min(limit, remainingLines - 1);
+				}
+
 				const tempIssues = issues.slice(0, limit);
+
+				// @todo(nick-ng): what happens if the line limit is reached before the last status?
 				tempIssues.forEach((issue) => {
 					let line = `- ${issue.key}: ${issue.summary} ${
 						issue.assignee ? `- ${issue.assignee}` : ''
@@ -182,6 +205,7 @@ const main = async () => {
 					console.info(
 						line,
 					);
+					totalLines += 1;
 				});
 
 				if ((issues.length - tempIssues.length) !== 0) {
@@ -339,6 +363,12 @@ const main = async () => {
 						console.info(`\nNo comments`);
 					}
 				}
+			}
+			break;
+		}
+		case 'test': {
+			for (let i = 100; i > 0; i--) {
+				console.log(i);
 			}
 			break;
 		}

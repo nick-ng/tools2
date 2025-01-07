@@ -26,4 +26,5 @@ source <path-to-this-repo>/dot-bash-rc
 
 ### ToDo Comments
 
-- jira.ts:302: @todo(nick-ng): animate the carousel horse moving across the screen. `tput cols` gets the width of the terminal
+- jira.ts:192: @todo(nick-ng): what happens if the line limit is reached before the last status?
+- jira.ts:326: @todo(nick-ng): animate the carousel horse moving across the screen. `tput cols` gets the width of the terminal

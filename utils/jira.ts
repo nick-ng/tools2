@@ -365,7 +365,7 @@ export const getJiraBoard = async (
 	boardId: string,
 	sprintAdjustment = 0,
 ): Promise<{
-	sprint: JiraSprint;
+	sprint?: JiraSprint;
 	issuesByStatus: { [status: string]: MyJiraStatus[] };
 }> => {
 	let activeSprint: JiraSprint | undefined = undefined;
@@ -423,7 +423,6 @@ export const getJiraBoard = async (
 			throw new Error("Couldn't find active sprint.");
 		}
 
-
 		if (checkAllSprints) {
 			allSprints.sort((a, b) => {
 				const aDate = new Date(a.startDate);
@@ -440,7 +439,7 @@ export const getJiraBoard = async (
 		}
 
 		if (!interestedSprint) {
-			throw new Error("halp!")
+			throw new Error('halp!');
 		}
 
 		issueUrl =

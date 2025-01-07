@@ -1,6 +1,7 @@
 Shell colour codes
 
 Foreground
+
 - FgBlack = "\x1b[30m"
 - FgRed = "\x1b[31m"
 - FgGreen = "\x1b[32m"
@@ -12,6 +13,7 @@ Foreground
 - FgGray = "\x1b[90m"
 
 Background
+
 - BgBlack = "\x1b[40m"
 - BgRed = "\x1b[41m"
 - BgGreen = "\x1b[42m"
@@ -23,6 +25,7 @@ Background
 - BgGray = "\x1b[100m"
 
 Misc
+
 - Reset = "\x1b[0m"
 - Bright = "\x1b[1m"
 - Dim = "\x1b[2m"
@@ -32,8 +35,9 @@ Misc
 - Hidden = "\x1b[8m"
 
 e.g.
+
 ```javascript
-console.log(`\x1b[36m${url}\x1b[0m`)
+console.log(`\x1b[36m${url}\x1b[0m`);
 ```
 
 Note that the \ isn't escaped. i.e. the x isn't a "normal" character
