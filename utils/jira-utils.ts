@@ -91,6 +91,10 @@ type JiraContentRule = {
 	type: 'rule'; // <hr />
 };
 
+type JiraHardBreakRule = {
+	type: 'hardBreak'
+}
+
 export type JiraContent = (
 	| JiraContentText
 	| JiraContentInlineCard
@@ -104,6 +108,7 @@ export type JiraContent = (
 	| JiraContentMediaSingle
 	| JiraContentMediaGroup
 	| JiraContentRule
+	| JiraHardBreakRule
 )[];
 
 export const colourUrl = (url: string): string => {
@@ -268,7 +273,10 @@ parseContent = (c: JiraContent[number]) => {
 			return parseMediaSingle(c);
 		}
 		case 'rule': {
-			return `\n\n${''.padStart(80, '-')}\n\n`;
+			return `\n\n${''.padStart(30, '-')}\n\n`;
+		}
+		case 'hardBreak': {
+			return `\n`;
 		}
 		default: {
 			return `\n\n${JSON.stringify(c, null, '  ')}\n\n`;
